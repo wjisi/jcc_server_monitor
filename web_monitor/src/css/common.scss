@@ -1,0 +1,32 @@
+@media screen and (max-width:678px) {
+  #header {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    padding: 15px 30px;
+
+    .logo {
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 220px;
+    }
+  }
+}
+
+@media screen and (min-width:679px) {
+  #header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+    padding: 0 30px;
+
+    input {
+      width: 320px;
+    }
+  }
+}
