@@ -6,18 +6,33 @@
 </template>
 
 <script>
+import { getNodeList } from "@/js/fetch";
 export default {
   beforeRouteEnter(to, from, next) {
     next(vm => {
       vm.$store.dispatch("updateCurrentPage", "currentStatus");
     });
   },
+  mounted() {
+    console.log(
+      getNodeList({
+        // page: 1
+        // state: "",
+        // server: ""
+      })
+    );
+  },
   data() {
     return {};
   },
   methods: {
     toHistory() {
-      this.$router.push("historyStatus");
+      this.$router.push({
+        name: "historyStatus",
+        params: {
+          server: "skfjslkfjs"
+        }
+      });
     }
   }
 };

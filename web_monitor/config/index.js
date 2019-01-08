@@ -6,20 +6,19 @@ const path = require('path')
 
 module.exports = {
   dev: {
-
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
     proxyTable: {
       '/**/*': {
-        target: 'http://192.168.66.249:1373',
+        target: 'http://192.168.66.254:1337',
         changeOrigin: true, //allow different domain
         cookieDomainRewrite: {
           '*': 'localhost' // all domain cooke rewrite to localhost
         }
       },
       '/*.json': {
-        target: 'http://192.168.66.249:1373',
+        target: 'http://192.168.66.254:1337',
         changeOrigin: true,
         cookieDomainRewrite: {
           '*': 'localhost' // all domain cooke rewrite to localhost
