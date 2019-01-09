@@ -13,7 +13,7 @@ export default {
     });
   },
   mounted() {
-    this.currentNode = "123"; // this.$route.params.server;
+    this.currentNode = this.$route.params.server;
     this.$store.dispatch("updateCurrentNode", this.currentNode);
     console.log(this.currentNode);
   },
