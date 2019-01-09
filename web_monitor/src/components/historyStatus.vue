@@ -44,6 +44,7 @@
           style="width:100%"
           row-class-name="BlockDetailrowClass"
           header-row-class-name="BlockDetailHeaderRowclass"
+          :cell-style="cellStyle"
         >
           <el-table-column
             prop="server_state"
@@ -109,16 +110,10 @@
 
       <ul class="pagination">
         <li>
-          <el-pagination
-            background
-            layout="prev, pager, next"
-            small
-            :page-size="20"
-            :page-count="212"
-          ></el-pagination>
+          <el-pagination background layout="prev, pager, next" small :total="total"></el-pagination>
         </li>
         <li class="allPage">
-          <span>212</span>页
+          <span>{{total}}</span>页
         </li>
         <li>跳至
           <div class="input">
@@ -134,6 +129,7 @@
 </template>
 <script>
 import { getNodeHistoryList } from "../js/fetch";
+import { getStyle } from "@/js/utils";
 export default {
   name: "blockdetail",
   beforeRouteEnter(to, from, next) {
@@ -158,17 +154,20 @@ export default {
       end: "",
       timer: "",
       freshTime: "5s",
-      stateTime: "节点服务状态"
+      stateTime: "节点服务状态",
+      total: 0
     };
   },
   created() {
     this.getData();
   },
-  mounted() {
-    this.currentNode = "123"; // this.$route.params.server;
-    this.$store.dispatch("updateCurrentNode", this.currentNode);
-  },
   methods: {
+    cellStyle(data) {
+      if (data.columnIndex === 0) {
+        return getStyle(data.row.server_state);
+      }
+      return "";
+    },
     async sure() {
       let server = this.$route.params.hash;
       let data = {
@@ -237,9 +236,11 @@ export default {
           nodePublic: resData.public || "null",
           last_ledger_heigth: resData.last_ledger_heigth,
           hash: resData.hash,
-          last_ledger_time: resData.last_ledger_time
+          last_ledger_time: resData.last_ledger_time,
+          all_results: resData.all_results
         });
       }
+      this.total = list[0].all_results;
       console.log(list);
       return list;
     },
