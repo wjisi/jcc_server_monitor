@@ -35,3 +35,25 @@ export const getNodeList = async (data) => {
   })
   return res;
 }
+
+/** get a list of 10 nodes infomation
+ * @param {number} page (Which page to get；the default = 1)
+ * @param {String} state (Which state to show；the default = 'full')
+ * @param {String} start (Which server's info to get；the default = "")
+ * @param {String} end (Which server's info to get；the default = "")
+ *  */
+
+export const getNodeHistoryList = async (data) => {
+  let datas = {
+    server: data.server || "",
+    state: data.state || '',
+    start: data.start || '',
+    end: data.end
+  }
+  let res = await fetch({
+    url: getInfoHost() + `/history`,
+    method: "post",
+    data: datas
+  })
+  return res;
+}
