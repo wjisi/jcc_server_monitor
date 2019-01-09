@@ -141,6 +141,11 @@ export default {
       vm.$store.dispatch("updateCurrentPage", "historyStatus");
     });
   },
+  mounted() {
+    this.currentNode = this.$route.params.server;
+    this.$store.dispatch("updateCurrentNode", this.currentNode);
+    console.log(this.currentNode);
+  },
   data() {
     return {
       pickerOptions: {
