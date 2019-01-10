@@ -2,25 +2,57 @@
   <div id="currentStatus">
     <div class="title">
       <span>刷新频率</span>
-      <el-select v-model="value" placeholder="时间" @change="changeTime">
+      <el-select v-model="value" placeholder="10s" @change="changeTime">
         <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
       </el-select>
-      <span>请选择节点服务器状态</span>
+      <span style="margin-left:30px;">请选择节点服务器状态</span>
       <el-select v-model="values" placeholder="节点服务状态" @change="findForState">
         <el-option v-for="item in status" :key="item.values" :label="item.label" :value="item.values"></el-option>
       </el-select>
     </div>
     <div>
-       <el-table :data="tableData" border style="width: 100%" :header-row-style="headerRowStyle" :cell-style="cellStyle">
-          <el-table-column prop="server" label="节点服务器名称" min-width="9%" align="center" header-align="center"></el-table-column>
-          <el-table-column prop="server_state" label="节点服务状态" min-width="10%" align="center"  header-align="center" @change="changeColor"></el-table-column>
-          <el-table-column prop="infosGetTime" label="节点状态获取时间" min-width="14%" align="center" header-align="center"></el-table-column>
-          <el-table-column prop="complete_ledgers" label="节点本地账本区间" min-width="15%" align="center" header-align="center"></el-table-column>
-          <el-table-column prop="peers" label="P2P网络连接节点数量" min-width="13%" align="center" header-align="center"></el-table-column>
-          <el-table-column prop="io_latency_ms" label="读写等待时间" min-width="10%" align="center" header-align="center"></el-table-column>
-          <el-table-column prop="startup_time" label="节点启动时间" min-width="14%" align="center" header-align="center"></el-table-column>
-          <el-table-column prop="build_version" label="节点版本" min-width="8%" align="center" header-align="center"></el-table-column>
-          <el-table-column label="历史状态" min-width="8%" align="center" header-align="center">
+       <el-table :data="tableData" border style="width: 100%;min-width:1200px;" :header-row-style="headerRowStyle" :cell-style="cellStyle">
+          <el-table-column label="节点/服务器名称" min-width="10%" align="center" header-align="center" :render-header="renderheader">
+            <template slot-scope="scope">
+              <div>{{setDAta(scope.row.server)}}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="server_state" label="节点服务状态" min-width="14%" align="center"  header-align="center" @change="changeColor"></el-table-column>
+          <el-table-column label="节点状态/获取时间" min-width="12%" align="center" header-align="center" :render-header="renderheader">
+            <template slot-scope="scope">
+              <div>{{changeStateDate(scope.row.infosGetTime)}}</div>
+              <div>{{changeStateTime(scope.row.infosGetTime)}}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="complete_ledgers" label="节点本地账本区间" min-width="15%" align="center" header-align="center">
+              <template slot-scope="scope">
+              <!-- <div class="complete_ledgers" :title="scope.row.complete_ledgers">{{setDAta(scope.row.complete_ledgers)}}</div> -->
+              <el-dropdown>
+                <div class="complete_ledgers">{{setDAta(scope.row.complete_ledgers)}}</div>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item>{{setDAta(scope.row.complete_ledgers)}}</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            </template>
+          </el-table-column>
+          <el-table-column label="P2P网络/连接节点数量" min-width="12%" align="center" header-align="center" :render-header="renderheader">
+            <template slot-scope="scope">
+              <div>{{setDAta(scope.row.peers)}}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="读写/等待时间" min-width="9%" align="center" header-align="center" :render-header="renderheader">
+            <template slot-scope="scope">
+              <div>{{setDAta(scope.row.io_latency_ms)}}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="节点启动时间" min-width="12%" align="center" header-align="center">
+            <template slot-scope="scope">
+              <div>{{changeStateDate(scope.row.startup_time)}}</div>
+              <div>{{changeStateTime(scope.row.startup_time)}}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="build_version" label="节点版本" min-width="9%" align="center" header-align="center"></el-table-column>
+          <el-table-column label="历史状态" min-width="9%" align="center" header-align="center">
              <template slot-scope="scope">
                 <button @click="toHistory(scope.row.server)" class="lookBtn">立即查看</button>
             </template>
@@ -28,11 +60,14 @@
       </el-table>
     </div>
       <ul class="pagination">
-         <li><el-pagination background layout="prev, pager, next"  :total="total"></el-pagination> </li>
-         <!-- <li>跳至
-            <div class="inputDiv"><input type="text" placeholder="212"></div>页
+         <li><el-pagination background layout="prev, pager, next"  :total="total"></el-pagination></li>
+         <li class="allPage">
+          <span>{{total}}</span>页
+        </li>
+         <li>跳至
+            <div class="inputDiv"><input type="text" :placeholder="total"></div>页
          </li>
-         <li> <div class="sortButton">确认</div></li> -->
+         <li> <div class="sortButton" >确认</div></li>
       </ul>
   </div>
 </template>
@@ -117,15 +152,53 @@ export default {
   },
   mounted() {
     this.getNodeLists();
-    // getNodeList(data).then(data => {});
   },
   methods: {
+    setDAta(data) {
+      return data;
+    },
+    //表头换行
+    renderheader(h, { column, $index }) {
+      return h("span", {}, [
+        h("span", {}, column.label.split("/")[0]),
+        h("br"),
+        h("span", {}, column.label.split("/")[1])
+      ]);
+    },
+    //节点状态列单元格背景颜色显示
     cellStyle(data) {
       if (data.columnIndex === 1) {
         return getStyle(data.row.server_state);
       }
       return "";
     },
+    // setSplitDAta() {
+    //   let changeData = {};
+    //   if (data !== "null") {
+    //     changeData = data.replace(/,/g, "/n");
+    //   }
+    //   return changeData;
+    // },
+    //将数据拆换成两行显示
+    changeStateDate(data) {
+      let changeData = {};
+      if (data !== "null") {
+        changeData = data.split(/\s/g);
+      } else {
+        changeData[0] = "null";
+      }
+      return changeData[0];
+    },
+    changeStateTime(data) {
+      let changeData = {};
+      if (data !== "null") {
+        changeData = data.split(/\s/g);
+      } else {
+        changeData[1] = null;
+      }
+      return changeData[1];
+    },
+    //节点服务状态选择
     findForState(state) {
       let data = "";
       if (state === "") {
@@ -136,10 +209,14 @@ export default {
         this.currentState = state;
       }
       getNodeList(data).then(res => {
-        this.tableData = this.formatData(res.data);
-        // this.total = res.xx;
+        if (res.data.length !== 0) {
+          this.tableData = this.formatData(res.data);
+        } else {
+          this.tableData = "";
+        }
       });
     },
+    //页面跳转到历史节点页面
     toHistory(server) {
       this.$router.push({
         name: "historyStatus",
@@ -147,23 +224,27 @@ export default {
           server: server
         }
       });
-    },
-    changeTime(value) {
       clearInterval(this.myInter);
-      if (value > 0) {
-        this.myInter = setInterval(this.getNodeLists, value);
-      }
     },
-    changeColor() {},
+    //定时器:刷新pinlv
+    // changeTime(value) {
+    //   clearInterval(this.myInter);
+    //   if (value > 0) {
+    //     this.myInter = setInterval(this.getNodeLists, value);
+    //   }
+    // },
+    //表头样式
     headerRowStyle() {
-      return "font-size:14px;color:#3b3a4b;height:40px";
+      return "font-size:14px;color:#383a4b;height:40px;";
     },
+    //将处理过的数据绑定到tableData
     getNodeLists() {
       let data = { state: this.currentState };
       getNodeList(data).then(res => {
         this.tableData = this.formatData(res.data);
       });
     },
+    //对从接口中获取的数据处理格式
     formatData(data) {
       let list = [];
       let i = 0;
@@ -180,23 +261,20 @@ export default {
           io_latency_ms: item.io_latency_ms || "null",
           peers: item.peers || "null",
           startup_time: item.startup_time || "null",
-          all_results: item.all_results
+          all_results: item.all_results || "null"
         });
       }
-      this.total = list[0].all_results;
+      let num = list[0].all_results;
+      if (num / 10 > 1) {
+        this.total = num / 10;
+      } else {
+        this.total = 1;
+      }
       return list;
     }
   },
-  computed: {
-    select: {
-      get: function() {
-        return this.labels;
-      }
-    }
-  },
-
   created() {
-    // this.myInter = setInterval(this.getNodeLists, 2000);
+    // this.myInter = setInterval(this.getNodeLists, 10000);
   }
 };
 </script>
@@ -211,7 +289,6 @@ export default {
   width: 90%;
   text-align: left;
   margin-top: 30px;
-  margin-left: 30px;
 }
 .title > span {
   font-size: 16px;
@@ -232,11 +309,13 @@ export default {
   color: #ffffff;
   font-size: 12px;
   border-radius: 13px;
-  width: 70px;
+  min-width: 62px;
   height: 26px;
   border: none;
   text-align: center;
   line-height: 26px;
+  outline: none;
+  cursor: pointer;
 }
 li {
   margin-top: 20px;
@@ -248,6 +327,16 @@ li {
   font-size: 14px;
   margin-top: 20px;
   padding-bottom: 110px;
+  .allPage {
+    font-size: 14px;
+    height: 38px;
+    line-height: 38px;
+    color: #959595;
+    margin-right: 20px;
+    span {
+      margin-right: 10px;
+    }
+  }
   .sortButton {
     border: 1px solid #959595;
     border-radius: 6px;
@@ -257,14 +346,15 @@ li {
     margin-left: 20px;
     background: #f2f8fc;
     padding: 0 3px;
+    cursor: pointer;
   }
   li .inputDiv {
-    width: 36px;
-    height: 36px;
-    border: 1px solid #959595;
-    // display: inline-currentStatus;
+    display: inline;
     margin: 0 10px;
     border-radius: 6px;
+    input::-webkit-input-placeholder {
+      text-align: center;
+    }
   }
   li div input {
     border-radius: 6px;
@@ -273,17 +363,38 @@ li {
     border: 0;
   }
 }
-.has-gutter {
-  background-color: red;
+.complete_ledgers.el-dropdown-selfdefine {
+  width: 100%;
+  height: 46px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.full {
-  background: red;
+.el-dropdown-link {
+  white-space: nowrap;
+  height: 36px;
+  line-height: 38px;
+  padding: 0 10px;
+  color: #fff;
+  cursor: pointer;
+  margin-right: 4%;
+  i {
+    font-size: 8px;
+    margin-left: 8px;
+    position: relative;
+    bottom: 1px;
+  }
+}
+.el-dropdown-menu {
+  background-color: #fff;
+  .el-dropdown-menu__item {
+    width: 200px;
+  }
 }
 </style>
 <style  lang="scss"  >
 #currentStatus .pagination .is-background {
   .el-pager li:not(.disabled).active {
-    background: #18c9dd;
+    background: #5769fa;
     color: #ffffff;
   }
   .el-pager li {
