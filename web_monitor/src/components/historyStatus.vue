@@ -1,12 +1,129 @@
 <template>
-  <div>
-    历史状态页
-    <el-button type="success" @click="toHome">点击返回当前状态页</el-button>
+  <div id="blockdetail" class="blo">
+    <div class="previous" @click="goback">
+      <span @click="goback">返回上一页</span>
+    </div>
+    <div class="title">
+      <span class="titleItem">刷新频率</span>
+      <el-select v-model="value" placeholder="5s" @change="changeTime" style="width:100px">
+        <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
+      </el-select>
+      <span class="titleItem">请选择节点服务器状态</span>
+      <el-select v-model="values" placeholder="节点服务状态" @change="findForState" style="width:150px">
+        <el-option
+          v-for="item in status"
+          :key="item.values"
+          :label="item.label"
+          :value="item.values"
+        ></el-option>
+      </el-select>
+      <span class="selctionData">日期范围
+        <el-date-picker v-model="start" type="date" value-format="yyyy-MM-dd" placeholder="开始时间"></el-date-picker>至
+        <el-date-picker v-model="end" type="date" value-format="yyyy-MM-dd" placeholder="结束时间"></el-date-picker>
+        <span class="sure" @click="sure">确认</span>
+      </span>
+    </div>
+    <div class="bockList">
+      <div class="blockList">
+        <el-table
+          :data="blockList"
+          style="width:100%"
+          row-class-name="BlockDetailrowClass"
+          header-row-class-name="BlockDetailHeaderRowclass"
+          :cell-style="cellStyle"
+        >
+          <el-table-column
+            prop="server_state"
+            label="节点服务器状态"
+            id="ellipsis"
+            min-width="10%"
+            align="center"
+            header-align="center"
+          >
+            <template slot-scope="scope">
+              <div>{{handleStateData(scope.row.server_state)}}</div>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="infosGetTime"
+            label="节点状态获取时间"
+            id="ellipsis"
+            min-width="13%"
+            align="center"
+          ></el-table-column>
+          <el-table-column prop="complete_ledgers" label="节点本地账本区间" align="center" min-width="15%"></el-table-column>
+          <el-table-column
+            prop="peers"
+            label="P2P网络连接节点数量"
+            id="ellipsis"
+            align="center"
+            min-width="14%"
+          ></el-table-column>
+          <el-table-column
+            prop="io_latency_ms"
+            label="读写等待时间"
+            id="ellipsis"
+            align="center"
+            min-width="10%"
+          ></el-table-column>
+          <el-table-column
+            prop="startup_time"
+            label="节点启动时间"
+            id="ellipsis"
+            align="center"
+            min-width="13%"
+          ></el-table-column>
+          <el-table-column prop="build_version" label="节点版本" align="center" min-width="9%"></el-table-column>
+          <el-table-column prop="hash" label="公钥" align="center" min-width="16%">
+            <template slot-scope="scope">
+              <div>{{handleStateData(scope.row.nodePublic)}}</div>
+            </template>
+          </el-table-column>
+          <el-table-column type="expand" width="35" align="left">
+            <template slot-scope="props">
+              <el-form label-position="left" inline class="demo-table-expand">
+                <el-form-item label="节点公钥">
+                  <span>{{ props.row.nodePublic }}</span>
+                </el-form-item>
+                <el-form-item label="最后验证区块高度">
+                  <span>{{ props.row.last_ledger_heigth }}</span>
+                </el-form-item>
+                <el-form-item label="最后验证区块HASH值">
+                  <span>{{ props.row.hash }}</span>
+                </el-form-item>
+                <el-form-item label="最后验证区块时间">
+                  <span>{{ props.row.last_ledger_time }}</span>
+                </el-form-item>
+              </el-form>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <ul class="pagination">
+        <li>
+          <el-pagination background layout="prev, pager, next" :page-size="20" :page-count="212"></el-pagination>
+        </li>
+        <li class="allPage">
+          <span>212</span>页
+        </li>
+        <li>跳至
+          <div class="input">
+            <input type="text" placeholder="100">
+          </div>页
+        </li>
+        <li>
+          <div class="sortButton">确认</div>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
-
 <script>
+import { getNodeHistoryList } from "../js/fetch";
+import { getStyle } from "@/js/utils";
 export default {
+  name: "blockdetail",
   beforeRouteEnter(to, from, next) {
     next(vm => {
       vm.$store.dispatch("updateCurrentPage", "historyStatus");
@@ -19,23 +136,383 @@ export default {
   },
   data() {
     return {
-      currentNode: ""
+      pickerOptions: {
+        disabledDate(time) {
+          return time.getTime() > Date.now();
+        }
+      },
+      time: [
+        {
+          value: 5000,
+          label: "5s"
+        },
+        {
+          value: 10000,
+          label: "10s"
+        },
+        {
+          value: 30000,
+          label: "30s"
+        },
+        {
+          value: 600000,
+          label: "10min"
+        },
+        {
+          value: -1,
+          label: "不刷新"
+        }
+      ],
+      status: [
+        {
+          values: "",
+          label: "节点服务器状态"
+        },
+        {
+          values: "disconnected",
+          label: "disconnected"
+        },
+        {
+          values: "connected",
+          label: "connected"
+        },
+        {
+          values: "syncing",
+          label: "syncing"
+        },
+        {
+          values: "tracking",
+          label: "tracking"
+        },
+        {
+          values: "full",
+          label: "full"
+        },
+        {
+          values: "validating",
+          label: "validating"
+        },
+        {
+          values: "proposing",
+          label: "proposing"
+        },
+        {
+          values: "error",
+          label: "error"
+        }
+      ],
+      blockList: [],
+      value: "",
+      values: "",
+      start: "",
+      end: "",
+      timer: "",
+      server: ""
     };
   },
+  created() {
+    this.getData();
+  },
   methods: {
-    toHome() {
-      this.$router.push("/");
+    goback() {
+      this.$router.go(-1);
+    },
+    cellStyle(data) {
+      if (data.columnIndex === 0) {
+        return getStyle(data.row.server_state);
+      }
+      return "";
+    },
+    async sure() {
+      let data = {
+        server: this.server || "wss://c01.jingtum.com:5020",
+        state: this.freshTime,
+        start: this.stateTime,
+        end: this.end
+      };
+      let res = await getNodeHistoryList(data);
+      this.blockList = this.handleGetData(res.data);
+    },
+    changeTime(value) {
+      clearInterval(this.timer);
+      if (value > 0) {
+        this.timer = setInterval(this.getData, value);
+      }
+    },
+    async findForState(value) {
+      let data = {
+        server: this.server,
+        state: value,
+        start: "",
+        end: ""
+      };
+      let res = await getNodeHistoryList(data);
+      this.blockList = this.handleGetData(res.data);
+    },
+    async getData() {
+      let data = {
+        server: this.server || "wss://c01.jingtum.com:5020",
+        state: "",
+        start: "",
+        end: ""
+      };
+      let res = await getNodeHistoryList(data);
+      this.blockList = this.handleGetData(res.data);
+    },
+    handleGetData(res) {
+      let i = 1;
+      let list = [];
+      for (; i < res.length; i++) {
+        let resData = JSON.parse(res[i]);
+        list.push({
+          server_state: resData.server_state,
+          infosGetTime: resData.infosGetTime,
+          complete_ledgers: resData.complete_ledgers,
+          peers: resData.peers,
+          io_latency_ms: resData.io_latency_ms,
+          startup_time: resData.startup_time,
+          build_version: resData.build_version,
+          nodePublic: resData.public || "null",
+          last_ledger_heigth: resData.last_ledger_heigth,
+          hash: resData.hash,
+          last_ledger_time: resData.last_ledger_time,
+          all_results: resData.all_results
+        });
+      }
+      return list;
+    },
+    handleStateData(value) {
+      return value;
     }
   }
 };
 </script>
+<style lang="scss" scoped>
+.bockList {
+  border-top: 1px solid #e0e8ed;
+  border-left: 1px solid #e0e8ed;
+}
+.title {
+  width: 100%;
+  text-align: left;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.titleItem {
+  font-size: 16px;
+  color: #383a4b;
+}
+.el-select {
+  width: 155px;
+  margin-left: 10px;
+}
+#blockdetail {
+  min-width: 1000px;
+  padding: 0 30px;
+  padding-bottom: 110px;
+  background: #f9faff;
+  .previous {
+    color: #289ef5;
+    font-size: 14px;
+    width: 20;
+    text-align: left;
+    margin-top: 10px;
+  }
+  .selction {
+    padding: 30px 0 20px 0;
+    height: 40px;
+    line-height: 40px;
+    text-align: left;
+    font-size: 16px;
+    color: #383a4b;
+  }
+  .interval {
+    padding: 0 10px 0;
+  }
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  font-size: 14px;
+  padding: 20px 0;
+  color: #959595;
+  .allPage {
+    padding-top: 2px;
+    font-size: 14px;
+    height: 38px;
+    line-height: 38px;
+    color: #959595;
+    margin-right: 20px;
+    span {
+      margin-right: 10px;
+    }
+  }
+  .sortButton {
+    border: 1px solid #959595;
+    border-radius: 6px;
+    height: 36px;
+    line-height: 36px;
+    width: 50px;
+    margin-left: 20px;
+  }
+  li .input {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #959595;
+    display: inline-block;
+    border-radius: 6px;
+    margin: 0 10px;
+  }
+  li div input {
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    border: 0;
+  }
+}
+.el-select-dropdown__item {
+  font-size: 14px;
+  color: #565a65;
+}
+.el-select-dropdown__item:hover {
+  background: #f2fbef;
+  opacity: 80%;
+}
+</style>
 
-<style scoped>
-div {
-  width: 90%;
-  height: 200px;
-  margin: 0 auto;
-  line-height: 200px;
-  text-align: center;
+<style  lang="scss" >
+.el-icon-arrow-right {
+  font-size: 16px;
+}
+.el-table__expanded-cell {
+  padding: 0px 20px !important;
+  padding-top: 16px !important;
+  background: #f8f8f8;
+  width: 80px !important;
+  font-size: 12px;
+  .el-form-item:nth-child(odd) {
+    width: 60%;
+    color: #383a4b;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .el-form-item:nth-child(even) {
+    width: 32%;
+    color: #383a4b;
+  }
+}
+.BlockDetailHeaderRowclass {
+  color: #383a4b;
+  font-size: 14px;
+  height: 40px;
+  th {
+    border-right: 1px solid #e0e8ed;
+  }
+  th:nth-child(8) {
+    border-right: 0px;
+  }
+}
+#blockdetail .BlockDetailrowClass {
+  font-size: 12px;
+  height: 40px;
+  td {
+    border-right: 1px solid #e0e8ed;
+  }
+  td:nth-child(8) {
+    border-right: 0px;
+  }
+}
+.el-picker-panel {
+  width: 330px;
+  height: 348px;
+}
+.selctionData {
+  right: 0;
+  color: #383a4b;
+  font-size: 16px;
+  display: inline-block;
+  float: right;
+  overflow: hidden;
+  .sure {
+    width: 38px;
+    height: 40px;
+    line-height: 40px;
+    border: 1px solid #959595;
+    background: #f9faff;
+    display: inline-block;
+    padding: 0 10px;
+    border-radius: 6px;
+  }
+  .ui-datepicker {
+    margin-botton: 10px;
+  }
+  .sure:hover {
+    color: #289ef5;
+    border: 1px solid #289ef5;
+    cursor: pointer;
+  }
+  input::-webkit-input-placeholder {
+    color: #565a65;
+    font-size: 14px;
+    position: relative;
+    left: 0px;
+    top: 3px;
+  }
+  .el-date-editor {
+    text-align: center;
+    width: 140px;
+    height: 40px;
+    line-height: 40px;
+    margin: 0 14px 0 7px;
+    text-align: left;
+  }
+}
+.el-input__prefix {
+  right: 14px;
+  .el-input__icon {
+    float: right;
+    font-size: 18px;
+  }
+}
+.el-input__inner {
+  padding: 0 10px 0 10px !important;
+}
+#blockdetail .pagination .is-background {
+  .el-pager li:not(.disabled).active {
+    background: #5769fa;
+  }
+  .el-pager li {
+    background: #ffffff;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    margin-right: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #959595;
+    border: 1px solid #959595;
+  }
+  .btn-next,
+  .btn-prev {
+    background: #ffffff;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    margin-right: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #959595;
+    border: 1px solid #959595;
+  }
+}
+#blockdetail .el-pager .el-icon-more {
+  display: none;
+}
+.selected span {
+  color: #565a65;
+  font-size: 14px;
+  font-weight: normal;
 }
 </style>
