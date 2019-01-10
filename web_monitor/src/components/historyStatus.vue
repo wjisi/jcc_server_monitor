@@ -1,15 +1,15 @@
 <template>
   <div id="blockdetail" class="blo">
-    <div class="previous" @click="goback">
+    <div class="previous">
       <span @click="goback">返回上一页</span>
     </div>
     <div class="title">
       <span class="titleItem">刷新频率</span>
-      <el-select v-model="value" placeholder="5s" @change="changeTime" style="width:100px">
+      <el-select v-model="value" placeholder="10s" @change="changeTime" style="width:100px">
         <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
       </el-select>
       <span class="titleItem">请选择节点服务器状态</span>
-      <el-select v-model="values" placeholder="节点服务状态" @change="findForState" style="width:150px">
+      <el-select v-model="values" placeholder="节点服务状态" @change="findForState" style="width:145px">
         <el-option
           v-for="item in status"
           :key="item.values"
@@ -50,15 +50,38 @@
             id="ellipsis"
             min-width="13%"
             align="center"
-          ></el-table-column>
-          <el-table-column prop="complete_ledgers" label="节点本地账本区间" align="center" min-width="15%"></el-table-column>
+          >
+            <template slot-scope="scope">
+              <div>{{scope.row.infosGetTime.date}}</div>
+              <div>{{scope.row.infosGetTime.time}}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="complete_ledgers" label="节点本地账本区间" align="center" min-width="15%">
+            <template slot-scope="scope">
+              <el-popover
+                placement="top-start"
+                width="200"
+                trigger="hover"
+                :content="scope.row.complete_ledgers.all"
+              >
+                <el-button slot="reference">
+                  <div>{{scope.row.complete_ledgers.data1}}</div>
+                  <div>{{scope.row.complete_ledgers.data2}}...</div>
+                </el-button>
+              </el-popover>
+            </template>
+          </el-table-column>
           <el-table-column
             prop="peers"
             label="P2P网络连接节点数量"
             id="ellipsis"
             align="center"
             min-width="14%"
-          ></el-table-column>
+          >
+            <template slot-scope="scope">
+              <div>{{scope.row.peers}}</div>
+            </template>
+          </el-table-column>
           <el-table-column
             prop="io_latency_ms"
             label="读写等待时间"
@@ -72,7 +95,12 @@
             id="ellipsis"
             align="center"
             min-width="13%"
-          ></el-table-column>
+          >
+            <template slot-scope="scope">
+              <div>{{scope.row.startup_time.date}}</div>
+              <div>{{scope.row.startup_time.time}}</div>
+            </template>
+          </el-table-column>
           <el-table-column prop="build_version" label="节点版本" align="center" min-width="9%"></el-table-column>
           <el-table-column prop="hash" label="公钥" align="center" min-width="16%">
             <template slot-scope="scope">
@@ -81,7 +109,7 @@
           </el-table-column>
           <el-table-column type="expand" width="35" align="left">
             <template slot-scope="props">
-              <el-form label-position="left" inline class="demo-table-expand">
+              <el-form label-position="right" inline class="demo-table-expand">
                 <el-form-item label="节点公钥">
                   <span>{{ props.row.nodePublic }}</span>
                 </el-form-item>
@@ -102,10 +130,10 @@
 
       <ul class="pagination">
         <li>
-          <el-pagination background layout="prev, pager, next" :page-size="20" :page-count="212"></el-pagination>
+          <el-pagination background layout="prev, pager, next" :total="total"></el-pagination>
         </li>
         <li class="allPage">
-          <span>212</span>页
+          <span>{{this.total}}</span>页
         </li>
         <li>跳至
           <div class="input">
@@ -120,7 +148,7 @@
   </div>
 </template>
 <script>
-import { getNodeHistoryList } from "../js/fetch";
+import { getNodeHistoryList } from "@/js/fetch";
 import { getStyle } from "@/js/utils";
 export default {
   name: "blockdetail",
@@ -207,7 +235,9 @@ export default {
       start: "",
       end: "",
       timer: "",
-      server: ""
+      server: "",
+      total: 212,
+      startup_time: {}
     };
   },
   created() {
@@ -266,11 +296,11 @@ export default {
         let resData = JSON.parse(res[i]);
         list.push({
           server_state: resData.server_state,
-          infosGetTime: resData.infosGetTime,
-          complete_ledgers: resData.complete_ledgers,
+          infosGetTime: this.intervalTime(resData.infosGetTime),
+          complete_ledgers: this.intervalString(resData.complete_ledgers),
           peers: resData.peers,
           io_latency_ms: resData.io_latency_ms,
-          startup_time: resData.startup_time,
+          startup_time: this.intervalTime(resData.startup_time),
           build_version: resData.build_version,
           nodePublic: resData.public || "null",
           last_ledger_heigth: resData.last_ledger_heigth,
@@ -279,10 +309,24 @@ export default {
           all_results: resData.all_results
         });
       }
+      this.total = list[0].all_results;
       return list;
     },
     handleStateData(value) {
       return value;
+    },
+    intervalTime(value) {
+      let dateTime = {};
+      dateTime.date = value.split(" ")[0];
+      dateTime.time = value.split(" ")[1];
+      return dateTime;
+    },
+    intervalString(value) {
+      let ellipsisString = {};
+      ellipsisString.data1 = value.substring(0, 10);
+      ellipsisString.data2 = value.substring(10, 18);
+      ellipsisString.all = value;
+      return ellipsisString;
     }
   }
 };
@@ -307,16 +351,19 @@ export default {
   margin-left: 10px;
 }
 #blockdetail {
-  min-width: 1000px;
+  min-width: 940px;
   padding: 0 30px;
   padding-bottom: 110px;
-  background: #f9faff;
+  background: #ffffff;
   .previous {
     color: #289ef5;
     font-size: 14px;
     width: 20;
     text-align: left;
     margin-top: 10px;
+    .previous span {
+      cursor: pointer;
+    }
   }
   .selction {
     padding: 30px 0 20px 0;
@@ -389,7 +436,7 @@ export default {
 .el-table__expanded-cell {
   padding: 0px 20px !important;
   padding-top: 16px !important;
-  background: #f8f8f8;
+  background: #ffffff;
   width: 80px !important;
   font-size: 12px;
   .el-form-item:nth-child(odd) {
@@ -437,12 +484,13 @@ export default {
   overflow: hidden;
   .sure {
     width: 38px;
-    height: 40px;
+    height: 38px;
     line-height: 40px;
     border: 1px solid #959595;
     background: #f9faff;
     display: inline-block;
-    padding: 0 10px;
+    padding: 0 8px;
+    padding-right: 5px;
     border-radius: 6px;
   }
   .ui-datepicker {
@@ -462,26 +510,28 @@ export default {
   }
   .el-date-editor {
     text-align: center;
-    width: 140px;
+    width: 130px;
     height: 40px;
     line-height: 40px;
-    margin: 0 14px 0 7px;
+    margin: 0 8px 0 6px;
     text-align: left;
   }
 }
 .el-input__prefix {
-  right: 14px;
+  right: 7px;
   .el-input__icon {
     float: right;
     font-size: 18px;
   }
 }
 .el-input__inner {
-  padding: 0 10px 0 10px !important;
+  padding: 0 7px 0 7px !important;
 }
 #blockdetail .pagination .is-background {
   .el-pager li:not(.disabled).active {
     background: #5769fa;
+    border: 0px;
+    color: #fff;
   }
   .el-pager li {
     background: #ffffff;
@@ -514,5 +564,15 @@ export default {
   color: #565a65;
   font-size: 14px;
   font-weight: normal;
+}
+.el-table__expand-icon {
+  transform: rotate(90deg);
+}
+.el-table__expand-icon--expanded {
+  transform: rotate(270deg);
+}
+.el-button {
+  border: 0;
+  background: none;
 }
 </style>
