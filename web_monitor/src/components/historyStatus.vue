@@ -1,36 +1,22 @@
 <template>
   <div id="blockdetail" class="blo">
-    <div class="selction">刷新状态
-      <el-dropdown @command="handlerefresh">
-        <span class="el-dropdown-link">
-          {{freshTime}}
-          <i class="el-icon-arrow-down el-icon--right"></i>
-        </span>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="5s">5s</el-dropdown-item>
-          <el-dropdown-item command="10s">10s</el-dropdown-item>
-          <el-dropdown-item command="30s">30s</el-dropdown-item>
-          <el-dropdown-item command="10min">10min</el-dropdown-item>
-          <el-dropdown-item command="不刷新">不刷新</el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
-      <span class="interval">请选择节点服务状态</span>
-      <el-dropdown @command="handlestatus">
-        <span class="el-dropdown-link">
-          {{stateTime}}
-          <i class="el-icon-arrow-down el-icon--right"></i>
-        </span>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="disconnected">disconnected</el-dropdown-item>
-          <el-dropdown-item command="connected">connected</el-dropdown-item>
-          <el-dropdown-item command="syncing">syncing</el-dropdown-item>
-          <el-dropdown-item command="tracking">tracking</el-dropdown-item>
-          <el-dropdown-item command="full">full</el-dropdown-item>
-          <el-dropdown-item command="validating">validating</el-dropdown-item>
-          <el-dropdown-item command="proposing">proposing</el-dropdown-item>
-          <el-dropdown-item command="error">error</el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
+    <div class="previous" @click="goback">
+      <span @click="goback">返回上一页</span>
+    </div>
+    <div class="title">
+      <span class="titleItem">刷新频率</span>
+      <el-select v-model="value" placeholder="5s" @change="changeTime" style="width:100px">
+        <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
+      </el-select>
+      <span class="titleItem">请选择节点服务器状态</span>
+      <el-select v-model="values" placeholder="节点服务状态" @change="findForState" style="width:150px">
+        <el-option
+          v-for="item in status"
+          :key="item.values"
+          :label="item.label"
+          :value="item.values"
+        ></el-option>
+      </el-select>
       <span class="selctionData">日期范围
         <el-date-picker v-model="start" type="date" value-format="yyyy-MM-dd" placeholder="开始时间"></el-date-picker>至
         <el-date-picker v-model="end" type="date" value-format="yyyy-MM-dd" placeholder="结束时间"></el-date-picker>
@@ -58,7 +44,13 @@
               <div>{{handleStateData(scope.row.server_state)}}</div>
             </template>
           </el-table-column>
-          <el-table-column prop="infosGetTime" label="节点状态获取时间" id="ellipsis" min-width="13%"></el-table-column>
+          <el-table-column
+            prop="infosGetTime"
+            label="节点状态获取时间"
+            id="ellipsis"
+            min-width="13%"
+            align="center"
+          ></el-table-column>
           <el-table-column prop="complete_ledgers" label="节点本地账本区间" align="center" min-width="15%"></el-table-column>
           <el-table-column
             prop="peers"
@@ -110,10 +102,10 @@
 
       <ul class="pagination">
         <li>
-          <el-pagination background layout="prev, pager, next" small :total="total"></el-pagination>
+          <el-pagination background layout="prev, pager, next" :page-size="20" :page-count="212"></el-pagination>
         </li>
         <li class="allPage">
-          <span>{{total}}</span>页
+          <span>212</span>页
         </li>
         <li>跳至
           <div class="input">
@@ -149,19 +141,82 @@ export default {
           return time.getTime() > Date.now();
         }
       },
+      time: [
+        {
+          value: 5000,
+          label: "5s"
+        },
+        {
+          value: 10000,
+          label: "10s"
+        },
+        {
+          value: 30000,
+          label: "30s"
+        },
+        {
+          value: 600000,
+          label: "10min"
+        },
+        {
+          value: -1,
+          label: "不刷新"
+        }
+      ],
+      status: [
+        {
+          values: "",
+          label: "节点服务器状态"
+        },
+        {
+          values: "disconnected",
+          label: "disconnected"
+        },
+        {
+          values: "connected",
+          label: "connected"
+        },
+        {
+          values: "syncing",
+          label: "syncing"
+        },
+        {
+          values: "tracking",
+          label: "tracking"
+        },
+        {
+          values: "full",
+          label: "full"
+        },
+        {
+          values: "validating",
+          label: "validating"
+        },
+        {
+          values: "proposing",
+          label: "proposing"
+        },
+        {
+          values: "error",
+          label: "error"
+        }
+      ],
       blockList: [],
+      value: "",
+      values: "",
       start: "",
       end: "",
       timer: "",
-      freshTime: "5s",
-      stateTime: "节点服务状态",
-      total: 0
+      server: ""
     };
   },
   created() {
     this.getData();
   },
   methods: {
+    goback() {
+      this.$router.go(-1);
+    },
     cellStyle(data) {
       if (data.columnIndex === 0) {
         return getStyle(data.row.server_state);
@@ -169,9 +224,8 @@ export default {
       return "";
     },
     async sure() {
-      let server = this.$route.params.hash;
       let data = {
-        server: server || "wss://c01.jingtum.com:5020",
+        server: this.server || "wss://c01.jingtum.com:5020",
         state: this.freshTime,
         start: this.stateTime,
         end: this.end
@@ -179,29 +233,15 @@ export default {
       let res = await getNodeHistoryList(data);
       this.blockList = this.handleGetData(res.data);
     },
-    handlerefresh(value) {
-      this.freshTime = value;
+    changeTime(value) {
       clearInterval(this.timer);
-      if (value !== "不刷新") {
-        this.timer = setInterval(() => {
-          this.getData();
-        }, this.getTime(value));
+      if (value > 0) {
+        this.timer = setInterval(this.getData, value);
       }
     },
-    getTime(key) {
-      let map = new Map([
-        ["5s", 5000],
-        ["10s", 10000],
-        ["30s", 30000],
-        ["10min", 600 * 1000]
-      ]);
-      return map.get(key);
-    },
-    async handlestatus(value) {
-      this.stateTime = value;
-      let server = this.$route.params.hash;
+    async findForState(value) {
       let data = {
-        server: server || "wss://c01.jingtum.com:5020",
+        server: this.server,
         state: value,
         start: "",
         end: ""
@@ -210,9 +250,8 @@ export default {
       this.blockList = this.handleGetData(res.data);
     },
     async getData() {
-      let server = this.$route.params.hash;
       let data = {
-        server: server || "wss://c01.jingtum.com:5020",
+        server: this.server || "wss://c01.jingtum.com:5020",
         state: "",
         start: "",
         end: ""
@@ -240,8 +279,6 @@ export default {
           all_results: resData.all_results
         });
       }
-      this.total = list[0].all_results;
-      console.log(list);
       return list;
     },
     handleStateData(value) {
@@ -255,11 +292,32 @@ export default {
   border-top: 1px solid #e0e8ed;
   border-left: 1px solid #e0e8ed;
 }
+.title {
+  width: 100%;
+  text-align: left;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.titleItem {
+  font-size: 16px;
+  color: #383a4b;
+}
+.el-select {
+  width: 155px;
+  margin-left: 10px;
+}
 #blockdetail {
   min-width: 1000px;
   padding: 0 30px;
   padding-bottom: 110px;
   background: #f9faff;
+  .previous {
+    color: #289ef5;
+    font-size: 14px;
+    width: 20;
+    text-align: left;
+    margin-top: 10px;
+  }
   .selction {
     padding: 30px 0 20px 0;
     height: 40px;
@@ -313,6 +371,14 @@ export default {
     height: 36px;
     border: 0;
   }
+}
+.el-select-dropdown__item {
+  font-size: 14px;
+  color: #565a65;
+}
+.el-select-dropdown__item:hover {
+  background: #f2fbef;
+  opacity: 80%;
 }
 </style>
 
@@ -444,54 +510,9 @@ export default {
 #blockdetail .el-pager .el-icon-more {
   display: none;
 }
-.el-date-picker__header-label {
-  left: 0;
-}
-.el-dropdown {
-  padding-left: 10px;
-  width: 100px;
-  height: 40px;
-  border: 1px solid #e0e8ed;
-  border-radius: 6px;
-  font-size: 14px;
+.selected span {
   color: #565a65;
-  display: inline-block;
-}
-.el-icon--right {
-  color: #999;
-  float: right;
-  position: relative;
-  top: 10px;
-  right: 10px;
-}
-.el-dropdown:hover {
-  background: #f9faff;
-  border: 1px solid #289ef5;
-  border-radius: 6px;
-  .el-icon--right {
-    color: #289ef5;
-  }
-}
-.el-dropdown-menu {
-  border-radius: 6px;
-  border: 1px solid #c2c3d3;
-}
-.el-popper:nth-child(2) .el-dropdown-menu__item {
-  width: 65px;
-  height: 40px;
-  border-radius: 6px;
   font-size: 14px;
-}
-.el-popper:nth-child(1) .el-dropdown-menu__item {
-  width: 65px;
-  height: 40px;
-  border-radius: 6px;
-  font-size: 14px;
-}
-.el-dropdown:nth-child(3) {
-  width: 140px;
-}
-.el-dropdown-menu__item:nth-child(n + 4) {
-  width: 118px;
+  font-weight: normal;
 }
 </style>
