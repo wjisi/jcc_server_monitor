@@ -1,6 +1,7 @@
 <template>
   <div id="blockdetail" class="blo">
     <div class="previous">
+      <i class="iconfont icon-fanhuishangyiyeicon"></i>
       <span @click="goback">返回上一页</span>
     </div>
     <div class="title">
@@ -358,11 +359,11 @@ export default {
   .previous {
     color: #289ef5;
     font-size: 14px;
-    width: 20;
     text-align: left;
-    margin-top: 10px;
+    padding-top: 20px;
     .previous span {
       cursor: pointer;
+      margin-left: 8px;
     }
   }
   .selction {
