@@ -420,7 +420,6 @@ li {
     margin-right: 10px;
     border-radius: 6px;
     font-size: 14px;
-    border: 1px solid #959595;
     color: #959595;
   }
   .btn-next,
