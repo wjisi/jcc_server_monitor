@@ -1,5 +1,5 @@
 <template>
-  <div id="blockdetail" class="blo">
+  <div id="historystatus" class="blo">
     <div class="previous">
       <i class="iconfont icon-fanhuishangyiyeicon"></i>
       <span @click="goback">返回上一页</span>
@@ -29,8 +29,8 @@
         <el-table
           :data="blockList"
           style="width:100%"
-          row-class-name="BlockDetailrowClass"
-          header-row-class-name="BlockDetailHeaderRowclass"
+          row-class-name="historystatusrowClass"
+          header-row-class-name="historystatusHeaderRowclass"
           :cell-style="cellStyle"
         >
           <el-table-column
@@ -152,7 +152,7 @@
 import { getNodeHistoryList } from "@/js/fetch";
 import { getStyle } from "@/js/utils";
 export default {
-  name: "blockdetail",
+  name: "historyStatus",
   beforeRouteEnter(to, from, next) {
     next(vm => {
       vm.$store.dispatch("updateCurrentPage", "historyStatus");
@@ -161,7 +161,6 @@ export default {
   mounted() {
     this.server = this.$route.params.server;
     this.$store.dispatch("updateCurrentNode", this.server);
-    console.log(this.server);
   },
   data() {
     return {
@@ -236,13 +235,14 @@ export default {
       start: "",
       end: "",
       timer: "",
-      server: "",
-      total: 212,
+      server: "wss://c01.jingtum.com:5020",
+      total: 1,
       startup_time: {}
     };
   },
   created() {
-    this.getData();
+    let datas = {};
+    this.getData(datas);
   },
   methods: {
     goback() {
@@ -260,37 +260,34 @@ export default {
         this.timer = setInterval(this.getData, value);
       }
     },
-    async sure() {
-      let data = {
-        server: this.server || "wss://c01.jingtum.com:5020",
-        state: this.freshTime,
-        start: this.stateTime,
+    sure() {
+      let datas = {
+        start: this.start,
         end: this.end
       };
-      let res = await getNodeHistoryList(data);
-      this.blockList = this.handleGetData(res.data);
+      this.getData(datas);
     },
-    async findForState(value) {
-      let data = {
-        server: this.server,
-        state: value,
-        start: "",
-        end: ""
+    findForState(value) {
+      let datas = {
+        state: value
       };
-      let res = await getNodeHistoryList(data);
-      this.blockList = this.handleGetData(res.data);
+      this.getData(datas);
     },
-    async getData() {
+    async getData(datas) {
       let data = {
         server: this.server || "wss://c01.jingtum.com:5020",
-        state: "",
-        start: "",
-        end: ""
+        start: datas.start || "",
+        end: datas.end || "",
+        state: datas.state || ""
       };
       let res = await getNodeHistoryList(data);
       this.blockList = this.handleGetData(res.data);
     },
     handleGetData(res) {
+      if (res === []) {
+        this.total = 1;
+        return res;
+      }
       let i = 1;
       let list = [];
       for (; i < res.length; i++) {
@@ -310,7 +307,17 @@ export default {
           all_results: resData.all_results
         });
       }
-      this.total = list[0].all_results;
+      if (list.length === 0) {
+        this.total = 0;
+        return list;
+      } else {
+        let num = list[0].all_results;
+        if (num / 10 > 1) {
+          this.total = Math.ceil(num / 10);
+        } else {
+          this.total = 1;
+        }
+      }
       return list;
     },
     handleStateData(value) {
@@ -334,8 +341,7 @@ export default {
 </script>
 <style lang="scss" scoped>
 .bockList {
-  border-top: 1px solid #e0e8ed;
-  border-left: 1px solid #e0e8ed;
+  border: 1px solid #e0e8ed;
 }
 .title {
   width: 100%;
@@ -351,18 +357,18 @@ export default {
   width: 155px;
   margin-left: 10px;
 }
-#blockdetail {
+#historystatus {
   min-width: 940px;
   padding: 0 30px;
   padding-bottom: 110px;
-  background: #ffffff;
+  background: #f9faff;
   .previous {
     color: #289ef5;
     font-size: 14px;
     text-align: left;
     padding-top: 20px;
-    .previous span {
-      cursor: pointer;
+    cursor: pointer;
+    span {
       margin-left: 8px;
     }
   }
@@ -451,24 +457,24 @@ export default {
     color: #383a4b;
   }
 }
-.BlockDetailHeaderRowclass {
+.historystatusHeaderRowclass {
   color: #383a4b;
   font-size: 14px;
   height: 40px;
   th {
     border-right: 1px solid #e0e8ed;
   }
-  th:nth-child(8) {
+  th:nth-child(n + 8) {
     border-right: 0px;
   }
 }
-#blockdetail .BlockDetailrowClass {
+#historystatus .historystatusrowClass {
   font-size: 12px;
   height: 40px;
   td {
     border-right: 1px solid #e0e8ed;
   }
-  td:nth-child(8) {
+  td:nth-child(n + 8) {
     border-right: 0px;
   }
 }
@@ -494,9 +500,6 @@ export default {
     padding-right: 5px;
     border-radius: 6px;
   }
-  .ui-datepicker {
-    margin-botton: 10px;
-  }
   .sure:hover {
     color: #289ef5;
     border: 1px solid #289ef5;
@@ -513,13 +516,15 @@ export default {
     text-align: center;
     width: 130px;
     height: 40px;
-    line-height: 40px;
-    margin: 0 8px 0 6px;
+    line-height: 38px;
+    margin: 0 6px 0 6px;
     text-align: left;
+    bottom: 1px;
   }
 }
 .el-input__prefix {
   right: 7px;
+  bottom: 2px;
   .el-input__icon {
     float: right;
     font-size: 18px;
@@ -528,7 +533,7 @@ export default {
 .el-input__inner {
   padding: 0 7px 0 7px !important;
 }
-#blockdetail .pagination .is-background {
+#historystatus .pagination .is-background {
   .el-pager li:not(.disabled).active {
     background: #5769fa;
     border: 0px;
@@ -558,7 +563,7 @@ export default {
     border: 1px solid #959595;
   }
 }
-#blockdetail .el-pager .el-icon-more {
+#historystatus .el-pager .el-icon-more {
   display: none;
 }
 .selected span {
@@ -575,5 +580,6 @@ export default {
 .el-button {
   border: 0;
   background: none;
+  font-size: 12px;
 }
 </style>
