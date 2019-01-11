@@ -161,7 +161,6 @@ export default {
   mounted() {
     this.server = this.$route.params.server;
     this.$store.dispatch("updateCurrentNode", this.server);
-    console.log(this.server);
   },
   data() {
     return {
@@ -236,8 +235,8 @@ export default {
       start: "",
       end: "",
       timer: "",
-      server: "",
-      total: 212,
+      server: "wss://c01.jingtum.com:5020",
+      total: 1,
       startup_time: {}
     };
   },
@@ -262,9 +261,9 @@ export default {
     },
     async sure() {
       let data = {
-        server: this.server || "wss://c01.jingtum.com:5020",
+        server: this.server,
         state: this.freshTime,
-        start: this.stateTime,
+        start: this.start,
         end: this.end
       };
       let res = await getNodeHistoryList(data);
@@ -291,6 +290,10 @@ export default {
       this.blockList = this.handleGetData(res.data);
     },
     handleGetData(res) {
+      if (res === []) {
+        this.total = 1;
+        return res;
+      }
       let i = 1;
       let list = [];
       for (; i < res.length; i++) {
@@ -310,7 +313,16 @@ export default {
           all_results: resData.all_results
         });
       }
-      this.total = list[0].all_results;
+      if (list.length === 0) {
+        return list;
+      } else {
+        let num = list[0].all_results;
+        if (num / 10 > 1) {
+          this.total = Math.ceil(num / 10);
+        } else {
+          this.total = 1;
+        }
+      }
       return list;
     },
     handleStateData(value) {
@@ -334,8 +346,7 @@ export default {
 </script>
 <style lang="scss" scoped>
 .bockList {
-  border-top: 1px solid #e0e8ed;
-  border-left: 1px solid #e0e8ed;
+  border: 1px solid #e0e8ed;
 }
 .title {
   width: 100%;
@@ -355,14 +366,14 @@ export default {
   min-width: 940px;
   padding: 0 30px;
   padding-bottom: 110px;
-  background: #ffffff;
+  background: #f9faff;
   .previous {
     color: #289ef5;
     font-size: 14px;
     text-align: left;
     padding-top: 20px;
-    .previous span {
-      cursor: pointer;
+    cursor: pointer;
+    span {
       margin-left: 8px;
     }
   }
@@ -458,7 +469,7 @@ export default {
   th {
     border-right: 1px solid #e0e8ed;
   }
-  th:nth-child(8) {
+  th:nth-child(n + 8) {
     border-right: 0px;
   }
 }
@@ -468,7 +479,7 @@ export default {
   td {
     border-right: 1px solid #e0e8ed;
   }
-  td:nth-child(8) {
+  td:nth-child(n + 8) {
     border-right: 0px;
   }
 }
@@ -513,13 +524,15 @@ export default {
     text-align: center;
     width: 130px;
     height: 40px;
-    line-height: 40px;
-    margin: 0 8px 0 6px;
+    line-height: 38px;
+    margin: 0 6px 0 6px;
     text-align: left;
+    bottom: 1px;
   }
 }
 .el-input__prefix {
   right: 7px;
+  bottom: 2px;
   .el-input__icon {
     float: right;
     font-size: 18px;
@@ -575,5 +588,6 @@ export default {
 .el-button {
   border: 0;
   background: none;
+  font-size: 12px;
 }
 </style>
