@@ -314,6 +314,7 @@ export default {
         });
       }
       if (list.length === 0) {
+        this.total = 0;
         return list;
       } else {
         let num = list[0].all_results;
