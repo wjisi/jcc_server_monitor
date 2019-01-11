@@ -17,7 +17,7 @@
               <div>{{setDAta(scope.row.server)}}</div>
             </template>
           </el-table-column>
-          <el-table-column prop="server_state" label="节点服务状态" min-width="14%" align="center"  header-align="center" @change="changeColor"></el-table-column>
+          <el-table-column prop="server_state" label="节点服务状态" min-width="14%" align="center"  header-align="center"></el-table-column>
           <el-table-column label="节点状态/获取时间" min-width="12%" align="center" header-align="center" :render-header="renderheader">
             <template slot-scope="scope">
               <div>{{changeStateDate(scope.row.infosGetTime)}}</div>
@@ -26,9 +26,9 @@
           </el-table-column>
           <el-table-column prop="complete_ledgers" label="节点本地账本区间" min-width="15%" align="center" header-align="center">
               <template slot-scope="scope">
-              <!-- <div class="complete_ledgers" :title="scope.row.complete_ledgers">{{setDAta(scope.row.complete_ledgers)}}</div> -->
               <el-dropdown>
-                <div class="complete_ledgers">{{setDAta(scope.row.complete_ledgers)}}</div>
+                <div class="complete_ledgers" align="center">{{changeComplete_ledgersData1(scope.row.complete_ledgers)}}</div>
+                <div class="complete_ledgers">{{changeComplete_ledgersData2(scope.row.complete_ledgers)}}</div>
                 <el-dropdown-menu slot="dropdown">
                   <el-dropdown-item>{{setDAta(scope.row.complete_ledgers)}}</el-dropdown-item>
                 </el-dropdown-menu>
@@ -157,7 +157,7 @@ export default {
     setDAta(data) {
       return data;
     },
-    //表头换行
+    // 表头换行
     renderheader(h, { column, $index }) {
       return h("span", {}, [
         h("span", {}, column.label.split("/")[0]),
@@ -165,21 +165,14 @@ export default {
         h("span", {}, column.label.split("/")[1])
       ]);
     },
-    //节点状态列单元格背景颜色显示
+    // 节点状态列单元格背景颜色显示
     cellStyle(data) {
       if (data.columnIndex === 1) {
         return getStyle(data.row.server_state);
       }
       return "";
     },
-    // setSplitDAta() {
-    //   let changeData = {};
-    //   if (data !== "null") {
-    //     changeData = data.replace(/,/g, "/n");
-    //   }
-    //   return changeData;
-    // },
-    //将数据拆换成两行显示
+    // 将数据拆换成两行显示
     changeStateDate(data) {
       let changeData = {};
       if (data !== "null") {
@@ -198,7 +191,29 @@ export default {
       }
       return changeData[1];
     },
-    //节点服务状态选择
+    changeComplete_ledgersData1(data) {
+      let changeData = {};
+      if (data !== "null" && data.length > 15) {
+        changeData = data.split(/,/g);
+      } else if (data !== "null" && data.length === 15) {
+        changeData[0] = data;
+      } else {
+        changeData[0] = "null";
+      }
+      return changeData[0];
+    },
+    changeComplete_ledgersData2(data) {
+      let changeData = {};
+      if (data !== "null" && data.length > 15) {
+        changeData = data.split(/,/g);
+      } else if (data !== "null" && data.length === 15) {
+        changeData[1] = null;
+      } else {
+        changeData[1] = null;
+      }
+      return changeData[1];
+    },
+    // 节点服务状态选择
     findForState(state) {
       let data = "";
       if (state === "") {
@@ -216,7 +231,7 @@ export default {
         }
       });
     },
-    //页面跳转到历史节点页面
+    // 页面跳转到历史节点页面
     toHistory(server) {
       this.$router.push({
         name: "historyStatus",
@@ -226,25 +241,25 @@ export default {
       });
       clearInterval(this.myInter);
     },
-    //定时器:刷新pinlv
-    // changeTime(value) {
-    //   clearInterval(this.myInter);
-    //   if (value > 0) {
-    //     this.myInter = setInterval(this.getNodeLists, value);
-    //   }
-    // },
-    //表头样式
+    // 定时器:刷新pinlv
+    changeTime(value) {
+      clearInterval(this.myInter);
+      if (value > 0) {
+        this.myInter = setInterval(this.getNodeLists, value);
+      }
+    },
+    // 表头样式
     headerRowStyle() {
       return "font-size:14px;color:#383a4b;height:40px;";
     },
-    //将处理过的数据绑定到tableData
+    // 将处理过的数据绑定到tableData
     getNodeLists() {
       let data = { state: this.currentState };
       getNodeList(data).then(res => {
         this.tableData = this.formatData(res.data);
       });
     },
-    //对从接口中获取的数据处理格式
+    // 对从接口中获取的数据处理格式
     formatData(data) {
       let list = [];
       let i = 0;
@@ -365,7 +380,6 @@ li {
 }
 .complete_ledgers.el-dropdown-selfdefine {
   width: 100%;
-  height: 46px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -387,7 +401,8 @@ li {
 .el-dropdown-menu {
   background-color: #fff;
   .el-dropdown-menu__item {
-    width: 200px;
+    width: 155px;
+    text-align: center;
   }
 }
 </style>
@@ -430,7 +445,5 @@ li {
   color: #4d4f57;
   font: 14px;
   max-height: 52px;
-  text-overflow: ellipsis;
-  overflow: hidden;
 }
 </style>
