@@ -20,7 +20,7 @@ export default new Router({
           component: _import('currentStatus')
         },
         {
-          path: '/home/historyStatus',
+          path: '/home/historyStatus/:server',
           name: 'historyStatus',
           component: _import('historyStatus')
         }
