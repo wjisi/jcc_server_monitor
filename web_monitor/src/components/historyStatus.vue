@@ -254,6 +254,12 @@ export default {
       }
       return "";
     },
+    changeTime(value) {
+      clearInterval(this.timer);
+      if (value > 0) {
+        this.timer = setInterval(this.getData, value);
+      }
+    },
     async sure() {
       let data = {
         server: this.server || "wss://c01.jingtum.com:5020",
@@ -263,12 +269,6 @@ export default {
       };
       let res = await getNodeHistoryList(data);
       this.blockList = this.handleGetData(res.data);
-    },
-    changeTime(value) {
-      clearInterval(this.timer);
-      if (value > 0) {
-        this.timer = setInterval(this.getData, value);
-      }
     },
     async findForState(value) {
       let data = {
@@ -437,7 +437,7 @@ export default {
 .el-table__expanded-cell {
   padding: 0px 20px !important;
   padding-top: 16px !important;
-  background: #ffffff;
+  background: #f8f8f8;
   width: 80px !important;
   font-size: 12px;
   .el-form-item:nth-child(odd) {
