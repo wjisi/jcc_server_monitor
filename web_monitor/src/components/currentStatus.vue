@@ -6,7 +6,7 @@
         <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
       </el-select>
       <span style="margin-left:30px;">请选择节点服务器状态</span>
-      <el-select v-model="values" placeholder="节点服务状态" @change="findForState">
+      <el-select v-model="values" placeholder="所有状态" @change="findForState">
         <el-option v-for="item in status" :key="item.values" :label="item.label" :value="item.values"></el-option>
       </el-select>
     </div>
@@ -110,7 +110,7 @@ export default {
       status: [
         {
           values: "",
-          label: "节点服务器状态"
+          label: "所有状态"
         },
         {
           values: "disconnected",
@@ -375,7 +375,7 @@ li {
     border-radius: 6px;
     width: 36px;
     height: 36px;
-    border: 0;
+    border: 1px solid #959595;
   }
 }
 .complete_ledgers.el-dropdown-selfdefine {
@@ -420,6 +420,7 @@ li {
     margin-right: 10px;
     border-radius: 6px;
     font-size: 14px;
+    border: 1px solid #959595;
     color: #959595;
   }
   .btn-next,
@@ -432,6 +433,7 @@ li {
     border-radius: 6px;
     font-size: 14px;
     color: #959595;
+    border: 1px solid #959595;
   }
 }
 #currentStatus .el-pager .el-icon-more {
