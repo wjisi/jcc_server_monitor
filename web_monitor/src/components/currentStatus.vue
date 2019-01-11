@@ -11,13 +11,13 @@
       </el-select>
     </div>
     <div>
-       <el-table :data="tableData" border style="width: 100%;min-width:1200px;" :header-row-style="headerRowStyle" :cell-style="cellStyle">
-          <el-table-column label="节点/服务器名称" min-width="10%" align="center" header-align="center" :render-header="renderheader">
+       <el-table :data="tableData" border style="width: 100%;" :header-row-style="headerRowStyle" :cell-style="cellStyle">
+          <el-table-column label="节点/服务器名称" min-width="13px" align="center" header-align="center" :render-header="renderheader">
             <template slot-scope="scope">
               <div>{{setDAta(scope.row.server)}}</div>
             </template>
           </el-table-column>
-          <el-table-column prop="server_state" label="节点服务状态" min-width="14%" align="center"  header-align="center"></el-table-column>
+          <el-table-column prop="server_state" label="节点服务状态" min-width="13px" align="center"  header-align="center"></el-table-column>
           <el-table-column label="节点状态/获取时间" min-width="12%" align="center" header-align="center" :render-header="renderheader">
             <template slot-scope="scope">
               <div>{{changeStateDate(scope.row.infosGetTime)}}</div>
