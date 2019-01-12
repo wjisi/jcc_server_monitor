@@ -115,14 +115,6 @@ export default {
     setDAta(data) {
       return data;
     },
-    // 表头换行
-    // renderheader(h, { column, $index }) {
-    //   return h("span", {}, [
-    //     h("span", {}, column.label.split("/")[0]),
-    //     h("br"),
-    //     h("span", {}, column.label.split("/")[1])
-    //   ]);
-    // },
     // 节点状态列单元格背景颜色显示
     cellStyle(data) {
       if (data.columnIndex === 1) {
@@ -247,7 +239,7 @@ export default {
     }
   },
   created() {
-    // this.myInter = setInterval(this.getNodeLists, 10000);
+    this.myInter = setInterval(this.getNodeLists, 10000);
   }
 };
 </script>
