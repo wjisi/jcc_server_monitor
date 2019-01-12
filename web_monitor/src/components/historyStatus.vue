@@ -9,14 +9,9 @@
       <el-select v-model="value" placeholder="10s" @change="changeTime" style="width:100px">
         <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
       </el-select>
-      <span class="titleItem">请选择节点服务器状态</span>
-      <el-select v-model="values" placeholder="节点服务状态" @change="findForState" style="width:145px">
-        <el-option
-          v-for="item in status"
-          :key="item.values"
-          :label="item.label"
-          :value="item.values"
-        ></el-option>
+      <span class="titleItem1">请选择节点服务器状态</span>
+      <el-select v-model="values" placeholder="所有状态" @change="findForState" style="width:140px">
+        <el-option v-for="item in status" :key="item.values" :label="item.label" :value="item.values"></el-option>
       </el-select>
       <span class="selctionData">日期范围
         <el-date-picker v-model="start" type="date" value-format="yyyy-MM-dd" placeholder="开始时间"></el-date-picker>至
@@ -26,32 +21,11 @@
     </div>
     <div class="bockList">
       <div class="blockList">
-        <el-table
-          :data="blockList"
-          style="width:100%"
-          row-class-name="historystatusrowClass"
-          header-row-class-name="historystatusHeaderRowclass"
-          :cell-style="cellStyle"
-        >
-          <el-table-column
-            prop="server_state"
-            label="节点服务器状态"
-            id="ellipsis"
-            min-width="10%"
-            align="center"
-            header-align="center"
-          >
-            <template slot-scope="scope">
-              <div>{{handleStateData(scope.row.server_state)}}</div>
-            </template>
+        <el-table :data="blockList" style="width:100%" row-class-name="historystatusrowClass" header-row-class-name="historystatusHeaderRowclass" :cell-style="cellStyle">
+          <el-table-column prop="server_state" label="节点服务器状态" id="ellipsis" min-width="10%" align="center" header-align="center">
+            <template slot-scope="scope"> <div>{{handleStateData(scope.row.server_state)}}</div></template>
           </el-table-column>
-          <el-table-column
-            prop="infosGetTime"
-            label="节点状态获取时间"
-            id="ellipsis"
-            min-width="13%"
-            align="center"
-          >
+          <el-table-column prop="infosGetTime" label="节点状态获取时间" id="ellipsis" min-width="13%" align="center">
             <template slot-scope="scope">
               <div>{{scope.row.infosGetTime.date}}</div>
               <div>{{scope.row.infosGetTime.time}}</div>
@@ -59,44 +33,16 @@
           </el-table-column>
           <el-table-column prop="complete_ledgers" label="节点本地账本区间" align="center" min-width="15%">
             <template slot-scope="scope">
-              <el-popover
-                placement="top-start"
-                width="200"
-                trigger="hover"
-                :content="scope.row.complete_ledgers.all"
-              >
-                <el-button slot="reference">
-                  <div>{{scope.row.complete_ledgers.data1}}</div>
-                  <div>{{scope.row.complete_ledgers.data2}}...</div>
-                </el-button>
+              <el-popover placement="top-start" width="200" trigger="hover" :content="scope.row.complete_ledgers.all">
+                <el-button slot="reference"> <div>{{scope.row.complete_ledgers.data1}}</div> <div>{{scope.row.complete_ledgers.data2}}</div></el-button>
               </el-popover>
             </template>
           </el-table-column>
-          <el-table-column
-            prop="peers"
-            label="P2P网络连接节点数量"
-            id="ellipsis"
-            align="center"
-            min-width="14%"
-          >
-            <template slot-scope="scope">
-              <div>{{scope.row.peers}}</div>
-            </template>
+          <el-table-column prop="peers"  label="P2P网络连接节点数量"  id="ellipsis"  align="center"  min-width="14%" >
+            <template slot-scope="scope"><div>{{scope.row.peers}}</div></template>
           </el-table-column>
-          <el-table-column
-            prop="io_latency_ms"
-            label="读写等待时间"
-            id="ellipsis"
-            align="center"
-            min-width="10%"
-          ></el-table-column>
-          <el-table-column
-            prop="startup_time"
-            label="节点启动时间"
-            id="ellipsis"
-            align="center"
-            min-width="13%"
-          >
+          <el-table-column prop="io_latency_ms" label="读写等待时间" id="ellipsis" align="center" min-width="10%"></el-table-column>
+          <el-table-column prop="startup_time" label="节点启动时间" id="ellipsis" align="center" min-width="13%">
             <template slot-scope="scope">
               <div>{{scope.row.startup_time.date}}</div>
               <div>{{scope.row.startup_time.time}}</div>
@@ -111,39 +57,20 @@
           <el-table-column type="expand" width="35" align="left">
             <template slot-scope="props">
               <el-form label-position="right" inline class="demo-table-expand">
-                <el-form-item label="节点公钥">
-                  <span>{{ props.row.nodePublic }}</span>
-                </el-form-item>
-                <el-form-item label="最后验证区块高度">
-                  <span>{{ props.row.last_ledger_heigth }}</span>
-                </el-form-item>
-                <el-form-item label="最后验证区块HASH值">
-                  <span>{{ props.row.hash }}</span>
-                </el-form-item>
-                <el-form-item label="最后验证区块时间">
-                  <span>{{ props.row.last_ledger_time }}</span>
-                </el-form-item>
+                <el-form-item label="节点公钥"><span>{{ props.row.nodePublic }}</span></el-form-item>
+                <el-form-item label="最后验证区块高度"> <span>{{ props.row.last_ledger_heigth }}</span></el-form-item>
+                <el-form-item label="最后验证区块HASH值"><span>{{ props.row.hash }}</span></el-form-item>
+                <el-form-item label="最后验证区块时间"> <span>{{ props.row.last_ledger_time }}</span></el-form-item>
               </el-form>
             </template>
           </el-table-column>
         </el-table>
       </div>
-
       <ul class="pagination">
-        <li>
-          <el-pagination background layout="prev, pager, next" :total="total"></el-pagination>
-        </li>
-        <li class="allPage">
-          <span>{{this.total}}</span>页
-        </li>
-        <li>跳至
-          <div class="input">
-            <input type="text" placeholder="100">
-          </div>页
-        </li>
-        <li>
-          <div class="sortButton">确认</div>
-        </li>
+        <li> <el-pagination background layout="prev, pager, next" :total="total" @current-change="handleCurrentChange"></el-pagination></li>
+        <li class="allPage"><span>{{total}}</span>页</li>
+        <li>跳至<div class="input"><input type="text" :placeholder="total" v-model="gopage"></div>页</li>
+        <li><div class="sortButton" @click="handleSizeChange">确认</div></li>
       </ul>
     </div>
   </div>
@@ -156,11 +83,8 @@ export default {
   beforeRouteEnter(to, from, next) {
     next(vm => {
       vm.$store.dispatch("updateCurrentPage", "historyStatus");
+      vm.$store.dispatch("updateCurrentNode", vm.$route.params.server);
     });
-  },
-  mounted() {
-    this.server = this.$route.params.server;
-    this.$store.dispatch("updateCurrentNode", this.server);
   },
   data() {
     return {
@@ -170,64 +94,22 @@ export default {
         }
       },
       time: [
-        {
-          value: 5000,
-          label: "5s"
-        },
-        {
-          value: 10000,
-          label: "10s"
-        },
-        {
-          value: 30000,
-          label: "30s"
-        },
-        {
-          value: 600000,
-          label: "10min"
-        },
-        {
-          value: -1,
-          label: "不刷新"
-        }
+        { value: 5000, label: "" },
+        { value: 10000, label: "10s" },
+        { value: 30000, label: "30s" },
+        { value: 600000, label: "10min" },
+        { value: -1, label: "不刷新" }
       ],
       status: [
-        {
-          values: "",
-          label: "节点服务器状态"
-        },
-        {
-          values: "disconnected",
-          label: "disconnected"
-        },
-        {
-          values: "connected",
-          label: "connected"
-        },
-        {
-          values: "syncing",
-          label: "syncing"
-        },
-        {
-          values: "tracking",
-          label: "tracking"
-        },
-        {
-          values: "full",
-          label: "full"
-        },
-        {
-          values: "validating",
-          label: "validating"
-        },
-        {
-          values: "proposing",
-          label: "proposing"
-        },
-        {
-          values: "error",
-          label: "error"
-        }
+        { values: "所有状态", label: "" },
+        { values: "disconnected", label: "disconnected" },
+        { values: "connected", label: "connected" },
+        { values: "syncing", label: "syncing" },
+        { values: "tracking", label: "tracking" },
+        { values: "full", label: "full" },
+        { values: "validating", label: "validating" },
+        { values: "proposing", label: "proposing" },
+        { values: "error", label: "error" }
       ],
       blockList: [],
       value: "",
@@ -235,16 +117,44 @@ export default {
       start: "",
       end: "",
       timer: "",
-      server: "wss://c01.jingtum.com:5020",
       total: 1,
-      startup_time: {}
+      startup_time: {},
+      gopage: ""
     };
   },
+  computed: {
+    server() {
+      return this.$store.getters.currentNode;
+    }
+  },
   created() {
-    let datas = {};
-    this.getData(datas);
+    this.getData();
+    setTimeout(() => {
+      this.getData();
+    }, 300);
   },
   methods: {
+    handleSizeChange() {
+      let datas = {
+        server: this.server,
+        start: this.start,
+        end: this.end,
+        state: this.values,
+        page: this.gopage || this.total
+      };
+      console.log(datas);
+      this.getData(datas);
+    },
+    handleCurrentChange(val) {
+      let datas = {
+        server: this.server,
+        start: this.start,
+        end: this.end,
+        state: this.values,
+        page: val
+      };
+      this.getData(datas);
+    },
     goback() {
       this.$router.go(-1);
     },
@@ -262,6 +172,7 @@ export default {
     },
     sure() {
       let datas = {
+        state: this.values,
         start: this.start,
         end: this.end
       };
@@ -273,19 +184,23 @@ export default {
       };
       this.getData(datas);
     },
-    async getData(datas) {
+    async getData(datas = {}) {
+      if (datas.state === "所有状态") {
+        datas.datas = "";
+      }
       let data = {
-        server: this.server || "wss://c01.jingtum.com:5020",
+        server: this.server || "",
         start: datas.start || "",
         end: datas.end || "",
-        state: datas.state || ""
+        state: datas.state || "",
+        page: datas.page || ""
       };
       let res = await getNodeHistoryList(data);
       this.blockList = this.handleGetData(res.data);
     },
     handleGetData(res) {
-      if (res === []) {
-        this.total = 1;
+      if (res === {}) {
+        this.total = 0;
         return res;
       }
       let i = 1;
@@ -293,18 +208,18 @@ export default {
       for (; i < res.length; i++) {
         let resData = JSON.parse(res[i]);
         list.push({
-          server_state: resData.server_state,
+          server_state: resData.server_state || "null",
           infosGetTime: this.intervalTime(resData.infosGetTime),
           complete_ledgers: this.intervalString(resData.complete_ledgers),
-          peers: resData.peers,
-          io_latency_ms: resData.io_latency_ms,
-          startup_time: this.intervalTime(resData.startup_time),
-          build_version: resData.build_version,
+          peers: resData.peers || "null",
+          io_latency_ms: resData.io_latency_ms || "null",
+          startup_time: this.intervalTime(resData.startup_time) || "null",
+          build_version: resData.build_version || "null",
           nodePublic: resData.public || "null",
-          last_ledger_heigth: resData.last_ledger_heigth,
-          hash: resData.hash,
-          last_ledger_time: resData.last_ledger_time,
-          all_results: resData.all_results
+          last_ledger_heigth: resData.last_ledger_heigth || "null",
+          hash: resData.hash || "null",
+          last_ledger_time: resData.last_ledger_time || "null",
+          all_results: resData.all_results || "null"
         });
       }
       if (list.length === 0) {
@@ -325,15 +240,26 @@ export default {
     },
     intervalTime(value) {
       let dateTime = {};
-      dateTime.date = value.split(" ")[0];
-      dateTime.time = value.split(" ")[1];
+      if (value) {
+        dateTime.date = value.split(" ")[0];
+        dateTime.time = value.split(" ")[1];
+      } else {
+        dateTime.date = "null";
+        dateTime.time = "";
+      }
       return dateTime;
     },
     intervalString(value) {
       let ellipsisString = {};
-      ellipsisString.data1 = value.substring(0, 10);
-      ellipsisString.data2 = value.substring(10, 18);
-      ellipsisString.all = value;
+      if (value) {
+        ellipsisString.data1 = value.substring(0, 8);
+        ellipsisString.data2 = value.substring(8, 13);
+        ellipsisString.all = value;
+      } else {
+        ellipsisString.data1 = "null";
+        ellipsisString.data2 = "";
+        ellipsisString.all = "";
+      }
       return ellipsisString;
     }
   }
@@ -348,10 +274,15 @@ export default {
   text-align: left;
   margin-top: 20px;
   margin-bottom: 20px;
-}
-.titleItem {
-  font-size: 16px;
-  color: #383a4b;
+  .titleItem {
+    font-size: 16px;
+    color: #383a4b;
+  }
+  .titleItem1 {
+    font-size: 16px;
+    color: #383a4b;
+    padding-left: 10px;
+  }
 }
 .el-select {
   width: 155px;
@@ -408,8 +339,12 @@ export default {
     border-radius: 6px;
     height: 36px;
     line-height: 36px;
-    width: 50px;
+    width: 58px;
+    color: #959595;
     margin-left: 20px;
+  }
+  .sortButton:hover {
+    cursor: pointer;
   }
   li .input {
     width: 36px;
@@ -573,9 +508,14 @@ export default {
 }
 .el-table__expand-icon {
   transform: rotate(90deg);
+  margin-right: 10px;
+  .el-icon {
+    margin-left: -8px;
+    margin-top: -8px;
+  }
 }
 .el-table__expand-icon--expanded {
-  transform: rotate(270deg);
+  transform: rotate(-90deg);
 }
 .el-button {
   border: 0;

@@ -48,7 +48,8 @@ export const getNodeHistoryList = async (data) => {
     server: data.server || "",
     state: data.state || '',
     start: data.start || '',
-    end: data.end
+    end: data.end || '',
+    page: data.page || 1
   }
   let res = await fetch({
     url: getInfoHost() + `/history`,
