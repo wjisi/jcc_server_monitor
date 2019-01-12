@@ -17,6 +17,8 @@
 
 <script>
 import { getClientHeight } from "@/js/utils";
+import bus from "@/js/bus";
+
 export default {
   name: "index",
   data() {
@@ -30,7 +32,7 @@ export default {
       if (target === "") {
         return;
       }
-      console.log(target);
+      bus.$emit("search", this.searchContent);
     }
   },
   computed: {
