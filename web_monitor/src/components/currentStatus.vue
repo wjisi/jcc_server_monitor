@@ -12,13 +12,13 @@
     </div>
     <div>
        <el-table :data="tableData" border style="width: 100%;" :header-row-style="headerRowStyle" :cell-style="cellStyle">
-          <el-table-column label="节点/服务器名称" min-width="13px" align="center" header-align="center" :render-header="renderheader">
+          <el-table-column label="节点服务器名称" min-width="13px" align="center" header-align="center">
             <template slot-scope="scope">
               <div>{{setDAta(scope.row.server)}}</div>
             </template>
           </el-table-column>
           <el-table-column prop="server_state" label="节点服务状态" min-width="13px" align="center"  header-align="center"></el-table-column>
-          <el-table-column label="节点状态/获取时间" min-width="12%" align="center" header-align="center" :render-header="renderheader">
+          <el-table-column label="节点状态/获取时间" min-width="12%" align="center" header-align="center">
             <template slot-scope="scope">
               <div>{{changeStateDate(scope.row.infosGetTime)}}</div>
               <div>{{changeStateTime(scope.row.infosGetTime)}}</div>
@@ -35,12 +35,12 @@
               </el-dropdown>
             </template>
           </el-table-column>
-          <el-table-column label="P2P网络/连接节点数量" min-width="12%" align="center" header-align="center" :render-header="renderheader">
+          <el-table-column label="P2P网络连接节点数量" min-width="12%" align="center" header-align="center" >
             <template slot-scope="scope">
               <div>{{setDAta(scope.row.peers)}}</div>
             </template>
           </el-table-column>
-          <el-table-column label="读写/等待时间" min-width="9%" align="center" header-align="center" :render-header="renderheader">
+          <el-table-column label="读写等待时间" min-width="9%" align="center" header-align="center">
             <template slot-scope="scope">
               <div>{{setDAta(scope.row.io_latency_ms)}}</div>
             </template>
@@ -86,64 +86,22 @@ export default {
       total: 0,
       currentState: "",
       time: [
-        {
-          value: 5000,
-          label: "5s"
-        },
-        {
-          value: 10000,
-          label: "10s"
-        },
-        {
-          value: 30000,
-          label: "30s"
-        },
-        {
-          value: 600000,
-          label: "10min"
-        },
-        {
-          value: -1,
-          label: "不刷新"
-        }
+        { value: 5000, label: "5s" },
+        { value: 10000, label: "10s" },
+        { value: 30000, label: "30s" },
+        { value: 600000, label: "10min" },
+        { value: -1, label: "不刷新" }
       ],
       status: [
-        {
-          values: "",
-          label: "所有状态"
-        },
-        {
-          values: "disconnected",
-          label: "disconnected"
-        },
-        {
-          values: "connected",
-          label: "connected"
-        },
-        {
-          values: "syncing",
-          label: "syncing"
-        },
-        {
-          values: "tracking",
-          label: "tracking"
-        },
-        {
-          values: "full",
-          label: "full"
-        },
-        {
-          values: "validating",
-          label: "validating"
-        },
-        {
-          values: "proposing",
-          label: "proposing"
-        },
-        {
-          values: "error",
-          label: "error"
-        }
+        { values: "", label: "所有状态" },
+        { values: "disconnected", label: "disconnected" },
+        { values: "connected", label: "connected" },
+        { values: "syncing", label: "syncing" },
+        { values: "tracking", label: "tracking" },
+        { values: "full", label: "full" },
+        { values: "validating", label: "validating" },
+        { values: "proposing", label: "proposing" },
+        { values: "error", label: "error" }
       ],
       value: "",
       values: "",
@@ -158,13 +116,13 @@ export default {
       return data;
     },
     // 表头换行
-    renderheader(h, { column, $index }) {
-      return h("span", {}, [
-        h("span", {}, column.label.split("/")[0]),
-        h("br"),
-        h("span", {}, column.label.split("/")[1])
-      ]);
-    },
+    // renderheader(h, { column, $index }) {
+    //   return h("span", {}, [
+    //     h("span", {}, column.label.split("/")[0]),
+    //     h("br"),
+    //     h("span", {}, column.label.split("/")[1])
+    //   ]);
+    // },
     // 节点状态列单元格背景颜色显示
     cellStyle(data) {
       if (data.columnIndex === 1) {
@@ -362,6 +320,10 @@ li {
     background: #f2f8fc;
     padding: 0 3px;
     cursor: pointer;
+  }
+  .sortButton:hover {
+    color: #289ef5;
+    border-color: #289ef5;
   }
   li .inputDiv {
     display: inline;
