@@ -12,9 +12,14 @@
     </div>
     <div>
        <el-table :data="tableData" border style="width: 100%;" :header-row-style="headerRowStyle" :cell-style="ServerStateCellStyle">
-          <el-table-column label="节点服务器名称" min-width="13px" align="center" header-align="center">
-            <template slot-scope="scope">
-              <div>{{scope.row.server}}</div>
+          <el-table-column label="节点服务器ID/名称" min-width="13px" align="center" header-align="center">
+           <template slot-scope="scope">
+              <el-dropdown>
+                <div class="complete_ledgers">{{(scope.row.server_ID)}}</div>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item>节点服务器名称{{scope.row.server}}</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
             </template>
           </el-table-column>
           <el-table-column prop="server_state" label="节点服务状态" min-width="13px" align="center"  header-align="center"></el-table-column>
@@ -60,9 +65,9 @@
       </el-table>
     </div>
       <ul class="pagination">
-         <li><el-pagination background layout="prev, pager, next"  :total="total" @current-change="handleCurrentChange"></el-pagination></li>
-         <li class="allPage"><span>{{total}}</span>页</li>
-         <li>跳至<div class="inputDiv"><input type="text" :placeholder="total" v-model="gopage"></div>页</li>
+         <li><el-pagination background layout="prev, pager, next"  :total="total" @current-change="handleCurrentChange" :page-size="10"></el-pagination></li>
+         <li class="allPage"><span>{{total}}</span>条</li>
+         <li>跳至<div class="inputDiv"><input type="text" v-model="gopage"></div>页</li>
          <li><div class="sortButton" @click="handleSizeChange">确认</div></li>
       </ul>
   </div>
@@ -80,13 +85,13 @@ export default {
   },
   data() {
     return {
-      page: 1,
+      page: "",
       total: 0,
       refreshTime: 10000,
       selectStatus: "",
       tableData: [],
       server: "",
-      gopage: "",
+      gopage: "1",
       time: [
         { refreshTime: 5000, label: "5s" },
         { refreshTime: 10000, label: "10s" },
@@ -256,20 +261,12 @@ export default {
           build_version: item.build_version || "null",
           io_latency_ms: item.io_latency_ms || "null",
           peers: item.peers || "null",
-          startup_time: item.startup_time || "null"
+          startup_time: item.startup_time || "null",
+          all_results: item.all_results || "null"
         });
       }
-      let num = "";
-      console.log(list.length);
-      if (list === []) {
-        num = 1;
-      } else {
-        num = list.length;
-      }
-      if (num / 10 > 1) {
-        this.total = num / 10;
-      } else {
-        this.total = 1;
+      if (list[0].all_results) {
+        this.total = list[0].all_results;
       }
       return list;
     }
@@ -393,7 +390,7 @@ li {
 .el-dropdown-menu {
   background-color: #fff;
   .el-dropdown-menu__item {
-    width: 155px;
+    width: 200px;
     text-align: center;
   }
 }

@@ -26,7 +26,8 @@ export const getNodeList = async (data) => {
   let datas = {
     page: data.page || 1,
     state: data.state || '',
-    server: data.server || ''
+    server: data.server || '',
+    server_ID: data.server_ID || ''
   }
   let res = await fetch({
     url: getInfoHost() + `/index`,
