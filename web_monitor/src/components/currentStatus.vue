@@ -2,19 +2,19 @@
   <div id="currentStatus">
     <div class="title">
       <span>刷新频率</span>
-      <el-select v-model="value" placeholder="10s" @change="changeTime">
-        <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
+      <el-select v-model="refreshTime" @change="refreshRrequency">
+        <el-option v-for="item in time" :key="item.refreshTime" :label="item.label" :value="item.refreshTime"></el-option>
       </el-select>
       <span style="margin-left:30px;">请选择节点服务器状态</span>
-      <el-select v-model="values" placeholder="所有状态" @change="findForState">
-        <el-option v-for="item in status" :key="item.values" :label="item.label" :value="item.values"></el-option>
+      <el-select v-model="selectStatus" @change="findForState">
+        <el-option v-for="item in status" :key="item.selectStatus" :label="item.label" :value="item.selectStatus"></el-option>
       </el-select>
     </div>
     <div>
-       <el-table :data="tableData" border style="width: 100%;" :header-row-style="headerRowStyle" :cell-style="cellStyle">
+       <el-table :data="tableData" border style="width: 100%;" :header-row-style="headerRowStyle" :cell-style="ServerStateCellStyle">
           <el-table-column label="节点服务器名称" min-width="13px" align="center" header-align="center">
             <template slot-scope="scope">
-              <div>{{setDAta(scope.row.server)}}</div>
+              <div>{{scope.row.server}}</div>
             </template>
           </el-table-column>
           <el-table-column prop="server_state" label="节点服务状态" min-width="13px" align="center"  header-align="center"></el-table-column>
@@ -27,22 +27,22 @@
           <el-table-column prop="complete_ledgers" label="节点本地账本区间" min-width="15%" align="center" header-align="center">
               <template slot-scope="scope">
               <el-dropdown>
-                <div class="complete_ledgers" align="center">{{changeComplete_ledgersData1(scope.row.complete_ledgers)}}</div>
-                <div class="complete_ledgers">{{changeComplete_ledgersData2(scope.row.complete_ledgers)}}</div>
+                <div class="complete_ledgers" align="center">{{changeCompleteLedgersData1(scope.row.complete_ledgers)}}</div>
+                <div class="complete_ledgers">{{changeCompleteLedgersData2(scope.row.complete_ledgers)}}</div>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item>{{setDAta(scope.row.complete_ledgers)}}</el-dropdown-item>
+                  <el-dropdown-item>{{scope.row.complete_ledgers}}</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </template>
           </el-table-column>
           <el-table-column label="P2P网络连接节点数量" min-width="12%" align="center" header-align="center" >
             <template slot-scope="scope">
-              <div>{{setDAta(scope.row.peers)}}</div>
+              <div>{{scope.row.peers}}</div>
             </template>
           </el-table-column>
           <el-table-column label="读写等待时间" min-width="9%" align="center" header-align="center">
             <template slot-scope="scope">
-              <div>{{setDAta(scope.row.io_latency_ms)}}</div>
+              <div>{{scope.row.io_latency_ms}}</div>
             </template>
           </el-table-column>
           <el-table-column label="节点启动时间" min-width="12%" align="center" header-align="center">
@@ -60,14 +60,10 @@
       </el-table>
     </div>
       <ul class="pagination">
-         <li><el-pagination background layout="prev, pager, next"  :total="total"></el-pagination></li>
-         <li class="allPage">
-          <span>{{total}}</span>页
-        </li>
-         <li>跳至
-            <div class="inputDiv"><input type="text" :placeholder="total"></div>页
-         </li>
-         <li> <div class="sortButton" >确认</div></li>
+         <li><el-pagination background layout="prev, pager, next"  :total="total" @current-change="handleCurrentChange"></el-pagination></li>
+         <li class="allPage"><span>{{total}}</span>页</li>
+         <li>跳至<div class="inputDiv"><input type="text" :placeholder="total" v-model="gopage"></div>页</li>
+         <li><div class="sortButton" @click="handleSizeChange">确认</div></li>
       </ul>
   </div>
 </template>
@@ -75,6 +71,7 @@
 <script>
 import { getNodeList } from "@/js/fetch";
 import { getStyle } from "@/js/utils";
+import bus from "@/js/bus";
 export default {
   beforeRouteEnter(to, from, next) {
     next(vm => {
@@ -83,80 +80,100 @@ export default {
   },
   data() {
     return {
+      page: 1,
       total: 0,
-      currentState: "",
+      refreshTime: 10000,
+      selectStatus: "",
+      tableData: [],
+      server: "",
+      gopage: "",
       time: [
-        { value: 5000, label: "5s" },
-        { value: 10000, label: "10s" },
-        { value: 30000, label: "30s" },
-        { value: 600000, label: "10min" },
-        { value: -1, label: "不刷新" }
+        { refreshTime: 5000, label: "5s" },
+        { refreshTime: 10000, label: "10s" },
+        { refreshTime: 30000, label: "30s" },
+        { refreshTime: 600000, label: "10min" },
+        { refreshTime: -1, label: "不刷新" }
       ],
       status: [
-        { values: "", label: "所有状态" },
-        { values: "disconnected", label: "disconnected" },
-        { values: "connected", label: "connected" },
-        { values: "syncing", label: "syncing" },
-        { values: "tracking", label: "tracking" },
-        { values: "full", label: "full" },
-        { values: "validating", label: "validating" },
-        { values: "proposing", label: "proposing" },
-        { values: "error", label: "error" }
-      ],
-      value: "",
-      values: "",
-      tableData: []
+        { selectStatus: "", label: "所有状态" },
+        { selectStatus: "disconnected", label: "disconnected" },
+        { selectStatus: "connected", label: "connected" },
+        { selectStatus: "syncing", label: "syncing" },
+        { selectStatus: "tracking", label: "tracking" },
+        { selectStatus: "full", label: "full" },
+        { selectStatus: "validating", label: "validating" },
+        { selectStatus: "proposing", label: "proposing" },
+        { selectStatus: "error", label: "error" }
+      ]
     };
   },
-  mounted() {
-    this.getNodeLists();
-  },
   methods: {
-    setDAta(data) {
-      return data;
+    // 确认按钮
+    handleSizeChange() {
+      let datas = {
+        server: this.server,
+        start: this.selectStatus,
+        page: this.gopage || this.total
+      };
+      this.getNodeLists(datas);
+    },
+    // 分页
+    handleCurrentChange(page) {
+      let datas = {
+        server: this.server,
+        start: this.selectStatus,
+        page: page
+      };
+      this.getNodeLists(datas);
+    },
+    // 查询
+    toSearch(server) {
+      this.server = server;
+      this.selectStatus = null;
+      this.getNodeLists(server);
     },
     // 节点状态列单元格背景颜色显示
-    cellStyle(data) {
-      if (data.columnIndex === 1) {
-        return getStyle(data.row.server_state);
+    ServerStateCellStyle(status) {
+      if (status.columnIndex === 1) {
+        return getStyle(status.row.server_state);
       }
       return "";
     },
     // 将数据拆换成两行显示
-    changeStateDate(data) {
+    changeStateDate(startupTime) {
       let changeData = {};
-      if (data !== "null") {
-        changeData = data.split(/\s/g);
+      if (startupTime !== "null") {
+        changeData = startupTime.split(/\s/g);
       } else {
         changeData[0] = "null";
       }
       return changeData[0];
     },
-    changeStateTime(data) {
+    changeStateTime(startupTime) {
       let changeData = {};
-      if (data !== "null") {
-        changeData = data.split(/\s/g);
+      if (startupTime !== "null") {
+        changeData = startupTime.split(/\s/g);
       } else {
         changeData[1] = null;
       }
       return changeData[1];
     },
-    changeComplete_ledgersData1(data) {
+    changeCompleteLedgersData1(completeLedger) {
       let changeData = {};
-      if (data !== "null" && data.length > 15) {
-        changeData = data.split(/,/g);
-      } else if (data !== "null" && data.length === 15) {
-        changeData[0] = data;
+      if (completeLedger !== "null" && completeLedger.length > 15) {
+        changeData = completeLedger.split(/,/g);
+      } else if (completeLedger !== "null" && completeLedger.length === 15) {
+        changeData[0] = completeLedger;
       } else {
         changeData[0] = "null";
       }
       return changeData[0];
     },
-    changeComplete_ledgersData2(data) {
+    changeCompleteLedgersData2(completeLedger) {
       let changeData = {};
-      if (data !== "null" && data.length > 15) {
-        changeData = data.split(/,/g);
-      } else if (data !== "null" && data.length === 15) {
+      if (completeLedger !== "null" && completeLedger.length > 15) {
+        changeData = completeLedger.split(/,/g);
+      } else if (completeLedger !== "null" && completeLedger.length === 15) {
         changeData[1] = null;
       } else {
         changeData[1] = null;
@@ -165,21 +182,31 @@ export default {
     },
     // 节点服务状态选择
     findForState(state) {
-      let data = "";
+      this.server = "";
+      let referdata = "";
       if (state === "") {
-        data = { state: state };
-        this.currentState = state;
+        referdata = {
+          state: state,
+          server: this.server || "",
+          page: this.page || 1
+        };
+        this.selectStatus = state;
       } else {
-        data = { state: state };
-        this.currentState = state;
+        referdata = {
+          state: state,
+          server: this.server || "",
+          page: this.page || 1
+        };
+        this.selectStatus = state;
       }
-      getNodeList(data).then(res => {
+      getNodeList(referdata).then(res => {
         if (res.data.length !== 0) {
           this.tableData = this.formatData(res.data);
         } else {
-          this.tableData = "";
+          this.tableData = [];
         }
       });
+      return state;
     },
     // 页面跳转到历史节点页面
     toHistory(server) {
@@ -191,8 +218,8 @@ export default {
       });
       clearInterval(this.myInter);
     },
-    // 定时器:刷新pinlv
-    changeTime(value) {
+    // 定时器:刷新频率
+    refreshRrequency(value) {
       clearInterval(this.myInter);
       if (value > 0) {
         this.myInter = setInterval(this.getNodeLists, value);
@@ -204,8 +231,12 @@ export default {
     },
     // 将处理过的数据绑定到tableData
     getNodeLists() {
-      let data = { state: this.currentState };
-      getNodeList(data).then(res => {
+      let resdata = {
+        server: this.server || "",
+        state: this.selectStatus || "",
+        page: this.page || 1
+      };
+      getNodeList(resdata).then(res => {
         this.tableData = this.formatData(res.data);
       });
     },
@@ -225,11 +256,16 @@ export default {
           build_version: item.build_version || "null",
           io_latency_ms: item.io_latency_ms || "null",
           peers: item.peers || "null",
-          startup_time: item.startup_time || "null",
-          all_results: item.all_results || "null"
+          startup_time: item.startup_time || "null"
         });
       }
-      let num = list[0].all_results;
+      let num = "";
+      console.log(list.length);
+      if (list === []) {
+        num = 1;
+      } else {
+        num = list.length;
+      }
       if (num / 10 > 1) {
         this.total = num / 10;
       } else {
@@ -239,7 +275,9 @@ export default {
     }
   },
   created() {
-    this.myInter = setInterval(this.getNodeLists, 10000);
+    this.getNodeLists();
+    this.refreshRrequency(10000);
+    bus.$on("search", this.toSearch);
   }
 };
 </script>
