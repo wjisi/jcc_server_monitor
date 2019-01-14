@@ -7,7 +7,7 @@
         <span v-show="!isShowSearch" class="logoTitle">{{currentNode}} 节点历史状态</span>
       </section>
       <section v-show="isShowSearch" class="search">
-        <input v-model="searchContent" type="text" placeholder="请输入要查看的节点服务器ID">
+        <input v-model="searchContent" type="text" placeholder="请输入要查看的节点服务器" @focus="searchContent=''">
         <button @click="search"><i class="iconfont icon-chaxunicon" style="color:#fff;font-size:18px;"></i></button>
       </section>
     </header>

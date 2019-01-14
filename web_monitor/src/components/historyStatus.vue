@@ -23,7 +23,7 @@
       <div class="blockList">
         <el-table :data="blockList" style="width:100%" row-class-name="historystatusrowClass" header-row-class-name="historystatusHeaderRowclass" :cell-style="cellStyle">
           <el-table-column prop="server_state" label="节点服务器状态" id="ellipsis" min-width="10%" align="center" header-align="center">
-            <template slot-scope="scope"> <div>{{handleStateData(scope.row.server_state)}}</div></template>
+            <template slot-scope="scope"> <div>{{scope.row.server_state}}</div></template>
           </el-table-column>
           <el-table-column prop="infosGetTime" label="节点状态获取时间" id="ellipsis" min-width="13%" align="center">
             <template slot-scope="scope">
@@ -51,7 +51,7 @@
           <el-table-column prop="build_version" label="节点版本" align="center" min-width="9%"></el-table-column>
           <el-table-column prop="hash" label="公钥" align="center" min-width="16%">
             <template slot-scope="scope">
-              <div>{{handleStateData(scope.row.nodePublic)}}</div>
+              <div>{{scope.row.nodePublic}}</div>
             </template>
           </el-table-column>
           <el-table-column type="expand" width="35" align="left">
@@ -87,9 +87,7 @@ export default {
     });
   },
   beforeRouteLeaver() {
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
+    clearInterval(this.timer);
   },
   data() {
     return {
@@ -122,7 +120,7 @@ export default {
       start: "",
       end: "",
       timer: "",
-      total: 1,
+      total: 0,
       startup_time: {},
       gopage: "",
       currentPage: 1
@@ -133,22 +131,11 @@ export default {
       return this.$store.getters.currentNode;
     }
   },
-
   created() {
-    this.getData();
     setTimeout(() => {
       this.getData();
-    }, 300);
-    this.timer = setInterval(() => {
-      let datas = {
-        server: this.server,
-        start: this.start,
-        end: this.end,
-        state: this.selectStatusvalues,
-        page: this.currentPage
-      };
-      this.getData(datas);
-    }, this.selectRefreshvalue);
+    }, 280);
+    this.changefreshTime();
   },
   methods: {
     jumpSizeChange() {
@@ -205,6 +192,7 @@ export default {
         state: this.selectStatusvalues,
         page: this.currentPage
       };
+      this.changefreshTime();
       this.getData(datas);
     },
     selectState() {
@@ -215,7 +203,7 @@ export default {
         state: this.selectStatusvalues,
         page: this.currentPage
       };
-      console.log(datas);
+      this.changefreshTime();
       this.getData(datas);
     },
     async getData(datas = {}) {
@@ -268,9 +256,6 @@ export default {
         }
       }
       return list;
-    },
-    handleStateData(value) {
-      return value;
     },
     intervalTime(value) {
       let dateTime = {};

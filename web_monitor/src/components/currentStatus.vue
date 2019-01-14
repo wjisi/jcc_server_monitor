@@ -12,14 +12,12 @@
     </div>
     <div>
        <el-table :data="tableData" border style="width: 100%;" :header-row-style="headerRowStyle" :cell-style="ServerStateCellStyle">
-          <el-table-column label="节点服务器ID/名称" min-width="13px" align="center" header-align="center">
+          <el-table-column label="节点服务器名称/ID" min-width="13px" align="center" header-align="center">
            <template slot-scope="scope">
-              <el-dropdown>
-                <div class="complete_ledgers">{{(scope.row.server_ID)}}</div>
-                <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item>节点服务器名称{{scope.row.server}}</el-dropdown-item>
-                </el-dropdown-menu>
-              </el-dropdown>
+              <el-popover placement="top-start" width="150" trigger="hover">
+                <div style="width:100%;text-align:center;">ID: {{scope.row.server_ID}}</div>
+                <el-col slot="reference">{{(scope.row.server)}}</el-col>
+              </el-popover>
             </template>
           </el-table-column>
           <el-table-column prop="server_state" label="节点服务状态" min-width="13px" align="center"  header-align="center"></el-table-column>
@@ -83,6 +81,10 @@ export default {
       vm.$store.dispatch("updateCurrentPage", "currentStatus");
     });
   },
+  beforeDestory() {
+    clearInterval(this.myInter);
+    bus.$off("search");
+  },
   data() {
     return {
       page: "",
@@ -112,6 +114,11 @@ export default {
       ]
     };
   },
+  created() {
+    this.getNodeLists();
+    this.refreshRrequency();
+    bus.$on("search", this.toSearch);
+  },
   methods: {
     // 确认按钮
     handleSizeChange() {
@@ -132,10 +139,12 @@ export default {
       this.getNodeLists(datas);
     },
     // 查询
-    toSearch(server) {
-      this.server = server;
-      this.selectStatus = null;
-      this.getNodeLists(server);
+    toSearch(id) {
+      if (id !== "") {
+        this.server = id;
+        this.selectStatus = null;
+        this.getNodeLists();
+      }
     },
     // 节点状态列单元格背景颜色显示
     ServerStateCellStyle(status) {
@@ -224,10 +233,13 @@ export default {
       clearInterval(this.myInter);
     },
     // 定时器:刷新频率
-    refreshRrequency(value) {
+    refreshRrequency() {
       clearInterval(this.myInter);
-      if (value > 0) {
-        this.myInter = setInterval(this.getNodeLists, value);
+      if (this.refreshTime > 0) {
+        this.myInter = setInterval(() => {
+          console.log("当前刷新" + this.refreshTime);
+          this.getNodeLists();
+        }, this.refreshTime);
       }
     },
     // 表头样式
@@ -248,33 +260,30 @@ export default {
     // 对从接口中获取的数据处理格式
     formatData(data) {
       let list = [];
-      let i = 0;
-      for (; i < data.length; i++) {
-        let item = JSON.parse(data[i]);
-        list.push({
-          index: i + 1,
-          server: item.server,
-          server_ID: item.server_ID || "null",
-          server_state: item.server_state,
-          infosGetTime: item.infosGetTime,
-          complete_ledgers: item.complete_ledgers || "null",
-          build_version: item.build_version || "null",
-          io_latency_ms: item.io_latency_ms || "null",
-          peers: item.peers || "null",
-          startup_time: item.startup_time || "null",
-          all_results: item.all_results || "null"
-        });
-      }
-      if (list[0].all_results) {
+      if (data.length > 0) {
+        let i = 0;
+        for (; i < data.length; i++) {
+          let item = JSON.parse(data[i]);
+          list.push({
+            index: i + 1,
+            server: item.server,
+            server_ID: item.server_ID || "null",
+            server_state: item.server_state,
+            infosGetTime: item.infosGetTime,
+            complete_ledgers: item.complete_ledgers || "null",
+            build_version: item.build_version || "null",
+            io_latency_ms: item.io_latency_ms || "null",
+            peers: item.peers || "null",
+            startup_time: item.startup_time || "null",
+            all_results: item.all_results || "null"
+          });
+        }
         this.total = list[0].all_results;
+      } else {
+        this.total = 1;
       }
       return list;
     }
-  },
-  created() {
-    this.getNodeLists();
-    this.refreshRrequency(10000);
-    bus.$on("search", this.toSearch);
   }
 };
 </script>
