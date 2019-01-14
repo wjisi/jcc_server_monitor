@@ -335,12 +335,11 @@ li {
   align-items: center;
   font-size: 14px;
   margin-top: 20px;
-  padding-bottom: 110px;
+  color: #959595;
   .allPage {
     font-size: 14px;
     height: 38px;
     line-height: 38px;
-    color: #959595;
     margin-right: 20px;
     span {
       margin-right: 10px;
@@ -356,6 +355,7 @@ li {
     background: #f2f8fc;
     padding: 0 3px;
     cursor: pointer;
+    color: #959595;
   }
   .sortButton:hover {
     color: #289ef5;
@@ -365,15 +365,15 @@ li {
     display: inline;
     margin: 0 10px;
     border-radius: 6px;
-    input::-webkit-input-placeholder {
-      text-align: center;
-    }
   }
   li div input {
     border-radius: 6px;
     width: 36px;
     height: 36px;
     border: 1px solid #959595;
+    color: #959595;
+    text-align: center;
+    text-indent: 0;
   }
 }
 .complete_ledgers.el-dropdown-selfdefine {
