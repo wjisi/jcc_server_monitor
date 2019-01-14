@@ -6,7 +6,7 @@
         <el-option v-for="item in time" :key="item.refreshTime" :label="item.label" :value="item.refreshTime"></el-option>
       </el-select>
       <span style="margin-left:30px;">请选择节点服务器状态</span>
-      <el-select v-model="selectStatus" @change="findForState">
+      <el-select v-model="selectStatus" @change="selectState">
         <el-option v-for="item in status" :key="item.selectStatus" :label="item.label" :value="item.selectStatus"></el-option>
       </el-select>
     </div>
@@ -83,14 +83,24 @@ export default {
       vm.$store.dispatch("updateCurrentPage", "currentStatus");
     });
   },
+  created() {
+    this.getNodeLists();
+    this.refreshRrequency(this.refreshTime);
+    bus.$on("search", this.toSearch);
+  },
+  beforeDestory() {
+    clearInterval(this.myInter);
+    bus.$off("search", this.toSearch);
+  },
   data() {
     return {
+      server_ID: "",
       page: "",
-      total: 0,
-      refreshTime: 10000,
+      server: "",
       selectStatus: "",
       tableData: [],
-      server: "",
+      total: 0,
+      refreshTime: 10000,
       gopage: "1",
       time: [
         { refreshTime: 5000, label: "5s" },
@@ -133,7 +143,13 @@ export default {
     },
     // 查询
     toSearch(server) {
-      this.server = server;
+      this.refreshRrequency();
+      if (server.length > 8) {
+        this.server = server;
+      } else {
+        this.server_ID = server;
+      }
+      console.log(this.server_ID);
       this.selectStatus = null;
       this.getNodeLists(server);
     },
@@ -186,22 +202,15 @@ export default {
       return changeData[1];
     },
     // 节点服务状态选择
-    findForState(state) {
+    selectState(state) {
+      this.refreshRrequency();
       this.server = "";
       let referdata = "";
       if (state === "") {
-        referdata = {
-          state: state,
-          server: this.server || "",
-          page: this.page || 1
-        };
+        referdata = { state: state };
         this.selectStatus = state;
       } else {
-        referdata = {
-          state: state,
-          server: this.server || "",
-          page: this.page || 1
-        };
+        referdata = { state: state };
         this.selectStatus = state;
       }
       getNodeList(referdata).then(res => {
@@ -224,10 +233,13 @@ export default {
       clearInterval(this.myInter);
     },
     // 定时器:刷新频率
-    refreshRrequency(value) {
+    refreshRrequency() {
       clearInterval(this.myInter);
-      if (value > 0) {
-        this.myInter = setInterval(this.getNodeLists, value);
+      if (this.refreshTime > 0) {
+        this.myInter = setInterval(() => {
+          console.log("当前刷新频率" + this.refreshTime);
+          this.getNodeLists();
+        }, this.refreshTime);
       }
     },
     // 表头样式
@@ -237,9 +249,10 @@ export default {
     // 将处理过的数据绑定到tableData
     getNodeLists() {
       let resdata = {
-        server: this.server || "",
-        state: this.selectStatus || "",
-        page: this.page || 1
+        server: this.server,
+        state: this.selectStatus,
+        page: this.page,
+        server_ID: this.server_ID
       };
       getNodeList(resdata).then(res => {
         this.tableData = this.formatData(res.data);
@@ -249,32 +262,29 @@ export default {
     formatData(data) {
       let list = [];
       let i = 0;
-      for (; i < data.length; i++) {
-        let item = JSON.parse(data[i]);
-        list.push({
-          index: i + 1,
-          server: item.server,
-          server_ID: item.server_ID || "null",
-          server_state: item.server_state,
-          infosGetTime: item.infosGetTime,
-          complete_ledgers: item.complete_ledgers || "null",
-          build_version: item.build_version || "null",
-          io_latency_ms: item.io_latency_ms || "null",
-          peers: item.peers || "null",
-          startup_time: item.startup_time || "null",
-          all_results: item.all_results || "null"
-        });
-      }
-      if (list[0].all_results) {
+      if (data.length > 1) {
+        for (; i < data.length; i++) {
+          let item = JSON.parse(data[i]);
+          list.push({
+            index: i + 1,
+            server: item.server,
+            server_ID: item.server_ID || "null",
+            server_state: item.server_state,
+            infosGetTime: item.infosGetTime,
+            complete_ledgers: item.complete_ledgers || "null",
+            build_version: item.build_version || "null",
+            io_latency_ms: item.io_latency_ms || "null",
+            peers: item.peers || "null",
+            startup_time: item.startup_time || "null",
+            all_results: item.all_results || "null"
+          });
+        }
         this.total = list[0].all_results;
+      } else {
+        this.total = 1;
       }
       return list;
     }
-  },
-  created() {
-    this.getNodeLists();
-    this.refreshRrequency(10000);
-    bus.$on("search", this.toSearch);
   }
 };
 </script>
@@ -326,13 +336,14 @@ li {
   align-items: center;
   font-size: 14px;
   margin-top: 20px;
-  padding-bottom: 110px;
+  color: #959595;
   .allPage {
     font-size: 14px;
     height: 38px;
     line-height: 38px;
     color: #959595;
     margin-right: 20px;
+    text-align: center;
     span {
       margin-right: 10px;
     }
@@ -356,15 +367,15 @@ li {
     display: inline;
     margin: 0 10px;
     border-radius: 6px;
-    input::-webkit-input-placeholder {
-      text-align: center;
-    }
+    color: #959595;
   }
   li div input {
     border-radius: 6px;
     width: 36px;
     height: 36px;
     border: 1px solid #959595;
+    color: #565a65;
+    text-align: center;
   }
 }
 .complete_ledgers.el-dropdown-selfdefine {
