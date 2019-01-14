@@ -378,6 +378,8 @@ export default {
     width: 36px;
     height: 36px;
     border: 0;
+    text-align: center;
+    text-indent: 0;
   }
 }
 .el-select-dropdown__item {
@@ -470,10 +472,10 @@ export default {
     text-align: center;
     width: 130px;
     height: 40px;
-    line-height: 38px;
+    line-height: 40px;
     margin: 0 6px 0 6px;
     text-align: left;
-    bottom: 1px;
+    bottom: 1.8px;
   }
 }
 .el-input__prefix {
@@ -484,8 +486,10 @@ export default {
     font-size: 18px;
   }
 }
+
 .el-input__inner {
   padding: 0 7px 0 7px !important;
+  height: 40px;
 }
 #historystatus .pagination .is-background {
   .el-pager li:not(.disabled).active {
