@@ -6,12 +6,12 @@
     </div>
     <div class="title">
       <span class="titleItem">刷新频率</span>
-      <el-select v-model="value"  @change="changefreshTime" style="width:100px">
-        <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
+      <el-select v-model="selectRefreshvalue"  @change="changefreshTime" style="width:100px">
+        <el-option v-for="item in time" :key="item.selectRefreshvalue" :label="item.label" :value="item.selectRefreshvalue"></el-option>
       </el-select>
       <span class="titleItem1">请选择节点服务器状态</span>
-      <el-select v-model="values"  @change="findForState" style="width:140px">
-        <el-option v-for="item in status" :key="item.values" :label="item.label" :value="item.values"></el-option>
+      <el-select v-model="selectStatusvalues"  @change="selectState" style="width:140px">
+        <el-option v-for="item in status" :key="item.selectStatusvalues" :label="item.label" :value="item.selectStatusvalues"></el-option>
       </el-select>
       <span class="selctionData">日期范围
         <el-date-picker v-model="start" type="date" value-format="yyyy-MM-dd" placeholder="开始时间"></el-date-picker>至
@@ -86,12 +86,10 @@ export default {
       vm.$store.dispatch("updateCurrentNode", vm.$route.params.server);
     });
   },
-  beforeRouteLeaver(to, from, next) {
-    next(vm => {
-      if (vm.timer) {
-        clearInterval(vm.timer);
-      }
-    });
+  beforeRouteLeaver() {
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
   },
   data() {
     return {
@@ -101,26 +99,26 @@ export default {
         }
       },
       time: [
-        { value: 5000, label: "5s" },
-        { value: 10000, label: "10s" },
-        { value: 30000, label: "30s" },
-        { value: 600000, label: "10min" },
-        { value: -1, label: "不刷新" }
+        { selectRefreshvalue: 5000, label: "5s" },
+        { selectRefreshvalue: 10000, label: "10s" },
+        { selectRefreshvalue: 30000, label: "30s" },
+        { selectRefreshvalue: 600000, label: "10min" },
+        { selectRefreshvalue: -1, label: "不刷新" }
       ],
       status: [
-        { values: "所有状态", label: "所有状态" },
-        { values: "disconnected", label: "disconnected" },
-        { values: "connected", label: "connected" },
-        { values: "syncing", label: "syncing" },
-        { values: "tracking", label: "tracking" },
-        { values: "full", label: "full" },
-        { values: "validating", label: "validating" },
-        { values: "proposing", label: "proposing" },
-        { values: "error", label: "error" }
+        { selectStatusvalues: "所有状态", label: "所有状态" },
+        { selectStatusvalues: "disconnected", label: "disconnected" },
+        { selectStatusvalues: "connected", label: "connected" },
+        { selectStatusvalues: "syncing", label: "syncing" },
+        { selectStatusvalues: "tracking", label: "tracking" },
+        { selectStatusvalues: "full", label: "full" },
+        { selectStatusvalues: "validating", label: "validating" },
+        { selectStatusvalues: "proposing", label: "proposing" },
+        { selectStatusvalues: "error", label: "error" }
       ],
       blockList: [],
-      value: "10s",
-      values: "所有状态",
+      selectRefreshvalue: 10000,
+      selectStatusvalues: "所有状态",
       start: "",
       end: "",
       timer: "",
@@ -146,11 +144,11 @@ export default {
         server: this.server,
         start: this.start,
         end: this.end,
-        state: this.values,
+        state: this.selectStatusvalues,
         page: this.currentPage
       };
       this.getData(datas);
-    }, this.value);
+    }, this.selectRefreshvalue);
   },
   methods: {
     jumpSizeChange() {
@@ -159,7 +157,7 @@ export default {
         server: this.server,
         start: this.start,
         end: this.end,
-        state: this.values,
+        state: this.selectStatusvalues,
         page: this.gopage || this.total
       };
       this.getData(datas);
@@ -170,7 +168,7 @@ export default {
         server: this.server,
         start: this.start,
         end: this.end,
-        state: this.values,
+        state: this.selectStatusvalues,
         page: val
       };
       this.getData(datas);
@@ -186,17 +184,17 @@ export default {
     },
     changefreshTime() {
       clearInterval(this.timer);
-      if (this.value > 0) {
+      if (this.selectRefreshvalue > 0) {
         this.timer = setInterval(() => {
           let datas = {
             server: this.server,
             start: this.start,
             end: this.end,
-            state: this.values,
+            state: this.selectStatusvalues,
             page: this.currentPage
           };
           this.getData(datas);
-        }, this.value);
+        }, this.selectRefreshvalue);
       }
     },
     selectTimerange() {
@@ -204,19 +202,20 @@ export default {
         server: this.server,
         start: this.start,
         end: this.end,
-        state: this.values,
+        state: this.selectStatusvalues,
         page: this.currentPage
       };
       this.getData(datas);
     },
-    findForState() {
+    selectState() {
       let datas = {
         server: this.server,
         start: this.start,
         end: this.end,
-        state: this.values,
+        state: this.selectStatusvalues,
         page: this.currentPage
       };
+      console.log(datas);
       this.getData(datas);
     },
     async getData(datas = {}) {
