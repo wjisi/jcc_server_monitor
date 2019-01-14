@@ -6,7 +6,7 @@
     </div>
     <div class="title">
       <span class="titleItem">刷新频率</span>
-      <el-select v-model="value" placeholder="10s" @change="changeTime" style="width:100px">
+      <el-select v-model="value" placeholder="10s" @change="changefreshTime" style="width:100px">
         <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
       </el-select>
       <span class="titleItem1">请选择节点服务器状态</span>
@@ -16,7 +16,7 @@
       <span class="selctionData">日期范围
         <el-date-picker v-model="start" type="date" value-format="yyyy-MM-dd" placeholder="开始时间"></el-date-picker>至
         <el-date-picker v-model="end" type="date" value-format="yyyy-MM-dd" placeholder="结束时间"></el-date-picker>
-        <span class="sure" @click="sure">确认</span>
+        <span class="sure" @click="selectTimerange">确认</span>
       </span>
     </div>
     <div class="bockList">
@@ -70,7 +70,7 @@
         <li> <el-pagination background layout="prev, pager, next" :total="total" @current-change="handleCurrentChange"></el-pagination></li>
         <li class="allPage"><span>{{total}}</span>页</li>
         <li>跳至<div class="input"><input type="text" :placeholder="total" v-model="gopage"></div>页</li>
-        <li><div class="sortButton" @click="handleSizeChange">确认</div></li>
+        <li><div class="sortButton" @click="jumpSizeChange">确认</div></li>
       </ul>
     </div>
   </div>
@@ -84,6 +84,13 @@ export default {
     next(vm => {
       vm.$store.dispatch("updateCurrentPage", "historyStatus");
       vm.$store.dispatch("updateCurrentNode", vm.$route.params.server);
+    });
+  },
+  beforeRouteLeaver(to, from, next) {
+    next(vm => {
+      if (vm.timer) {
+        clearInterval(vm.timer);
+      }
     });
   },
   data() {
@@ -119,7 +126,8 @@ export default {
       timer: "",
       total: 1,
       startup_time: {},
-      gopage: ""
+      gopage: "",
+      currentPade: 1
     };
   },
   computed: {
@@ -127,14 +135,26 @@ export default {
       return this.$store.getters.currentNode;
     }
   },
+
   created() {
     this.getData();
     setTimeout(() => {
       this.getData();
     }, 300);
+    this.timer = setInterval(() => {
+      let datas = {
+        server: this.server,
+        start: this.start,
+        end: this.end,
+        state: this.values,
+        page: this.currentPade
+      };
+      this.getData(datas);
+    }, 10000);
   },
   methods: {
-    handleSizeChange() {
+    jumpSizeChange() {
+      this.currentPade = this.gopage;
       let datas = {
         server: this.server,
         start: this.start,
@@ -146,6 +166,7 @@ export default {
       this.getData(datas);
     },
     handleCurrentChange(val) {
+      this.currentPade = val;
       let datas = {
         server: this.server,
         start: this.start,
@@ -164,29 +185,42 @@ export default {
       }
       return "";
     },
-    changeTime(value) {
+    changefreshTime(value) {
       clearInterval(this.timer);
       if (value > 0) {
-        this.timer = setInterval(this.getData, value);
+        this.timer = setInterval(() => {
+          let datas = {
+            server: this.server,
+            start: this.start,
+            end: this.end,
+            state: this.values,
+            page: this.currentPade
+          };
+          this.getData(datas);
+        }, value);
       }
     },
-    sure() {
+    selectTimerange() {
       let datas = {
-        state: this.values,
         start: this.start,
-        end: this.end
+        end: this.end,
+        state: this.values,
+        page: this.currentPade
       };
       this.getData(datas);
     },
     findForState(value) {
       let datas = {
-        state: value
+        start: this.start,
+        end: this.end,
+        state: value,
+        page: this.currentPage
       };
       this.getData(datas);
     },
     async getData(datas = {}) {
       if (datas.state === "所有状态") {
-        datas.datas = "";
+        datas.state = "";
       }
       let data = {
         server: this.server || "",
