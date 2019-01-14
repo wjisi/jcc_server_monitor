@@ -6,11 +6,11 @@
     </div>
     <div class="title">
       <span class="titleItem">刷新频率</span>
-      <el-select v-model="value" placeholder="10s" @change="changefreshTime" style="width:100px">
+      <el-select v-model="value"  @change="changefreshTime" style="width:100px">
         <el-option v-for="item in time" :key="item.value" :label="item.label" :value="item.value"></el-option>
       </el-select>
       <span class="titleItem1">请选择节点服务器状态</span>
-      <el-select v-model="values" placeholder="所有状态" @change="findForState" style="width:140px">
+      <el-select v-model="values"  @change="findForState" style="width:140px">
         <el-option v-for="item in status" :key="item.values" :label="item.label" :value="item.values"></el-option>
       </el-select>
       <span class="selctionData">日期范围
@@ -101,14 +101,14 @@ export default {
         }
       },
       time: [
-        { value: 5000, label: "" },
+        { value: 5000, label: "5s" },
         { value: 10000, label: "10s" },
         { value: 30000, label: "30s" },
         { value: 600000, label: "10min" },
         { value: -1, label: "不刷新" }
       ],
       status: [
-        { values: "所有状态", label: "" },
+        { values: "所有状态", label: "所有状态" },
         { values: "disconnected", label: "disconnected" },
         { values: "connected", label: "connected" },
         { values: "syncing", label: "syncing" },
@@ -119,15 +119,15 @@ export default {
         { values: "error", label: "error" }
       ],
       blockList: [],
-      value: "",
-      values: "",
+      value: "10s",
+      values: "所有状态",
       start: "",
       end: "",
       timer: "",
       total: 1,
       startup_time: {},
       gopage: "",
-      currentPade: 1
+      currentPage: 1
     };
   },
   computed: {
@@ -147,14 +147,14 @@ export default {
         start: this.start,
         end: this.end,
         state: this.values,
-        page: this.currentPade
+        page: this.currentPage
       };
       this.getData(datas);
-    }, 10000);
+    }, this.value);
   },
   methods: {
     jumpSizeChange() {
-      this.currentPade = this.gopage;
+      this.currentPage = this.gopage;
       let datas = {
         server: this.server,
         start: this.start,
@@ -162,11 +162,10 @@ export default {
         state: this.values,
         page: this.gopage || this.total
       };
-      console.log(datas);
       this.getData(datas);
     },
     handleCurrentChange(val) {
-      this.currentPade = val;
+      this.currentPage = val;
       let datas = {
         server: this.server,
         start: this.start,
@@ -185,35 +184,37 @@ export default {
       }
       return "";
     },
-    changefreshTime(value) {
+    changefreshTime() {
       clearInterval(this.timer);
-      if (value > 0) {
+      if (this.value > 0) {
         this.timer = setInterval(() => {
           let datas = {
             server: this.server,
             start: this.start,
             end: this.end,
             state: this.values,
-            page: this.currentPade
+            page: this.currentPage
           };
           this.getData(datas);
-        }, value);
+        }, this.value);
       }
     },
     selectTimerange() {
       let datas = {
+        server: this.server,
         start: this.start,
         end: this.end,
         state: this.values,
-        page: this.currentPade
+        page: this.currentPage
       };
       this.getData(datas);
     },
-    findForState(value) {
+    findForState() {
       let datas = {
+        server: this.server,
         start: this.start,
         end: this.end,
-        state: value,
+        state: this.values,
         page: this.currentPage
       };
       this.getData(datas);
@@ -223,7 +224,7 @@ export default {
         datas.state = "";
       }
       let data = {
-        server: this.server || "",
+        server: this.server,
         start: datas.start || "",
         end: datas.end || "",
         state: datas.state || "",
@@ -237,7 +238,7 @@ export default {
         this.total = 0;
         return res;
       }
-      let i = 1;
+      let i = 0;
       let list = [];
       for (; i < res.length; i++) {
         let resData = JSON.parse(res[i]);
