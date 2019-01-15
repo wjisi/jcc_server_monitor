@@ -141,9 +141,19 @@ export default {
     // 查询
     toSearch(id) {
       if (id !== "") {
-        this.server = id;
         this.selectStatus = null;
+        this.server = null;
+        this.page = 1;
         this.getNodeLists();
+        let i = 0;
+        let length = this.tableData.length;
+        console.log(this.tableData[0].server_ID);
+        for (; i < length; i++) {
+          if (id === this.tableData[i].server_ID);
+          this.server = this.tableData[i].server;
+          this.getNodeLists();
+        }
+        console.log(this.tableData);
       }
     },
     // 节点状态列单元格背景颜色显示
