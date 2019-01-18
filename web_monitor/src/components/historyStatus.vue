@@ -67,9 +67,9 @@
         </el-table>
       </div>
       <ul class="pagination">
-        <li> <el-pagination background layout="prev, pager, next" :total="total" @current-change="handleCurrentChange"></el-pagination></li>
-        <li class="allPage"><span>{{total}}</span>页</li>
-        <li>跳至<div class="input"><input type="text" :placeholder="total" v-model="gopage"></div>页</li>
+        <li> <el-pagination background layout="prev, pager, next" :total="total" :page-size="10" @current-change="handleCurrentChange"></el-pagination></li>
+        <li class="allPage"><span>{{allpage}}</span>页</li>
+        <li>跳至<div class="input"><input type="text" :placeholder="computerAllpage" v-model="gopage"></div>页</li>
         <li><div class="sortButton" @click="jumpSizeChange">确认</div></li>
       </ul>
     </div>
@@ -121,6 +121,7 @@ export default {
       end: "",
       timer: "",
       total: 0,
+      allpage: "",
       startup_time: {},
       gopage: "",
       currentPage: 1
@@ -129,6 +130,9 @@ export default {
   computed: {
     server() {
       return this.$store.getters.currentNode;
+    },
+    computerAllpage() {
+      return this.allpage;
     }
   },
   created() {
@@ -145,7 +149,7 @@ export default {
         start: this.start,
         end: this.end,
         state: this.selectStatusvalues,
-        page: this.gopage || this.total
+        page: this.gopage || this.allpage
       };
       this.getData(datas);
     },
@@ -221,10 +225,6 @@ export default {
       this.blockList = this.handleGetData(res.data);
     },
     handleGetData(res) {
-      if (res === {}) {
-        this.total = 0;
-        return res;
-      }
       let i = 0;
       let list = [];
       for (; i < res.length; i++) {
@@ -248,12 +248,8 @@ export default {
         this.total = 0;
         return list;
       } else {
-        let num = list[0].all_results;
-        if (num / 10 > 1) {
-          this.total = Math.ceil(num / 10);
-        } else {
-          this.total = 1;
-        }
+        this.total = list[0].all_results;
+        this.allpage = Math.ceil(this.total / 10);
       }
       return list;
     },
