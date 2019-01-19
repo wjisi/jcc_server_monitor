@@ -67,9 +67,9 @@
         </el-table>
       </div>
       <ul class="pagination">
-        <li> <el-pagination background layout="prev, pager, next" :total="total" :page-size="10" @current-change="handleCurrentChange"></el-pagination></li>
+        <li> <el-pagination background layout="prev, pager, next" :total="total" :page-size="10" :current-page="parseInt(currentPage)" @current-change="handleCurrentChange"></el-pagination></li>
         <li class="allPage"><span>{{allpage}}</span>页</li>
-        <li>跳至<div class="input"><input type="text" :placeholder="computerAllpage" v-model="gopage"></div>页</li>
+        <li>跳至<div class="input"><input type="text"  v-model="gopage" @focus="clearGopage"></div>页</li>
         <li><div class="sortButton" @click="jumpSizeChange">确认</div></li>
       </ul>
     </div>
@@ -121,18 +121,15 @@ export default {
       end: "",
       timer: "",
       total: 0,
-      allpage: "",
+      allpage: 100,
       startup_time: {},
-      gopage: "",
+      gopage: "100",
       currentPage: 1
     };
   },
   computed: {
     server() {
       return this.$store.getters.currentNode;
-    },
-    computerAllpage() {
-      return this.allpage;
     }
   },
   created() {
@@ -142,6 +139,9 @@ export default {
     this.changefreshTime();
   },
   methods: {
+    clearGopage() {
+      this.gopage = "";
+    },
     jumpSizeChange() {
       this.currentPage = this.gopage;
       let datas = {
@@ -149,7 +149,7 @@ export default {
         start: this.start,
         end: this.end,
         state: this.selectStatusvalues,
-        page: this.gopage || this.allpage
+        page: this.gopage || 100
       };
       this.getData(datas);
     },
