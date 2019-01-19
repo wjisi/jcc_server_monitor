@@ -61,13 +61,13 @@
             </template>
           </el-table-column>
       </el-table>
-    </div>
       <ul class="pagination">
-         <li><el-pagination background layout="prev, pager, next"  :total="total" @current-change="handleCurrentChange" :page-size="10"></el-pagination></li>
-         <li class="allPage"><span>{{total}}</span>条</li>
-         <li>跳至<div class="inputDiv"><input type="text" v-model="gopage"></div>页</li>
-         <li><div class="sortButton" @click="handleSizeChange">确认</div></li>
+        <li><el-pagination background layout="prev, pager, next" :total="total" :page-size="10" @current-change="handleCurrentChange" :current-page="parseInt(currentPage)"></el-pagination></li>
+        <li class="allPage"><span>{{allpage}}</span>页</li>
+        <li>跳至<div class="input"><input type="text" v-model="page"></div>页</li>
+        <li><div class="sortButton" @click="jumpSizeChange">确认</div></li>
       </ul>
+    </div>
   </div>
 </template>
 
@@ -87,13 +87,15 @@ export default {
   },
   data() {
     return {
-      page: "",
+      page: "1",
       total: 0,
+      allpage: "",
+      gopage: "1",
+      currentPage: 1,
       refreshTime: 10000,
       selectStatus: "",
       tableData: [],
       server: "",
-      gopage: "1",
       time: [
         { refreshTime: 5000, label: "5s" },
         { refreshTime: 10000, label: "10s" },
@@ -121,13 +123,16 @@ export default {
   },
   methods: {
     // 确认按钮
-    handleSizeChange() {
+    jumpSizeChange() {
       let datas = {
         server: this.server,
         start: this.selectStatus,
-        page: this.gopage || this.total
+        page: this.page || this.total
       };
-      this.getNodeLists(datas);
+      this.currentPage = this.page;
+      this.getNodeLists();
+      console.log(datas);
+      console.log(this.tableData);
     },
     // 分页
     handleCurrentChange(page) {
@@ -147,13 +152,11 @@ export default {
         this.getNodeLists();
         let i = 0;
         let length = this.tableData.length;
-        console.log(this.tableData[0].server_ID);
         for (; i < length; i++) {
           if (id === this.tableData[i].server_ID);
           this.server = this.tableData[i].server;
           this.getNodeLists();
         }
-        console.log(this.tableData);
       }
     },
     // 节点状态列单元格背景颜色显示
@@ -208,6 +211,7 @@ export default {
     findForState(state) {
       this.server = "";
       let referdata = "";
+      this.page = "1";
       if (state === "") {
         referdata = {
           state: state,
@@ -289,8 +293,10 @@ export default {
           });
         }
         this.total = list[0].all_results;
+        this.allpage = Math.ceil(this.total / 10);
       } else {
         this.total = 1;
+        this.allpage = Math.ceil(this.total / 10);
       }
       return list;
     }
@@ -347,10 +353,13 @@ li {
   margin-top: 20px;
   color: #959595;
   .allPage {
+    padding-top: 2px;
     font-size: 14px;
     height: 38px;
     line-height: 38px;
+    color: #959595;
     margin-right: 20px;
+    display: inline-block;
     span {
       margin-right: 10px;
     }
@@ -371,19 +380,22 @@ li {
     color: #289ef5;
     border-color: #289ef5;
   }
-  li .inputDiv {
-    display: inline;
-    margin: 0 10px;
+  li .input {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #959595;
+    display: inline-block;
     border-radius: 6px;
+    margin: 0 10px;
   }
   li div input {
     border-radius: 6px;
     width: 36px;
     height: 36px;
-    border: 1px solid #959595;
-    color: #959595;
+    border: 0;
     text-align: center;
     text-indent: 0;
+    color: #959595;
   }
 }
 .complete_ledgers.el-dropdown-selfdefine {
@@ -419,6 +431,7 @@ li {
   .el-pager li:not(.disabled).active {
     background: #5769fa;
     color: #ffffff;
+    border: 0px;
   }
   .el-pager li {
     background: #ffffff;
@@ -429,6 +442,7 @@ li {
     border-radius: 6px;
     font-size: 14px;
     color: #959595;
+    border: 1px solid #959595;
   }
   .btn-next,
   .btn-prev {
