@@ -28,10 +28,6 @@ export default {
   },
   methods: {
     search() {
-      let target = this.searchContent;
-      if (target === "") {
-        return;
-      }
       bus.$emit("search", this.searchContent);
     }
   },

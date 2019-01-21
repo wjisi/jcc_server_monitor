@@ -96,6 +96,7 @@ export default {
       selectStatus: "",
       tableData: [],
       server: "",
+
       time: [
         { refreshTime: 5000, label: "5s" },
         { refreshTime: 10000, label: "10s" },
@@ -144,19 +145,32 @@ export default {
       this.getNodeLists(datas);
     },
     // 查询
-    toSearch(id) {
+    async toSearch(id) {
+      console.log("search target server");
       if (id !== "") {
         this.selectStatus = null;
         this.server = null;
-        this.page = 1;
-        this.getNodeLists();
-        let i = 0;
-        let length = this.tableData.length;
-        for (; i < length; i++) {
-          if (id === this.tableData[i].server_ID);
-          this.server = this.tableData[i].server;
-          this.getNodeLists();
+        this.page = "";
+        let serverList = await this.getNodeLists("search");
+        let serverHead = id.length > 6 ? id.substr(0, 6) : id;
+        let targetServer = serverList.find(item => {
+          if (serverHead === "wss://") {
+            return item.server === id;
+          } else {
+            return item.server_ID === id;
+          }
+        });
+        this.tableData = [];
+        if (targetServer) {
+          this.server = targetServer.server;
+          this.tableData.push(targetServer);
+        } else {
+          this.server = id;
         }
+      } else {
+        console.log("serach all");
+        this.server = "";
+        this.getNodeLists();
       }
     },
     // 节点状态列单元格背景颜色显示
@@ -261,15 +275,18 @@ export default {
       return "font-size:14px;color:#383a4b;height:40px;";
     },
     // 将处理过的数据绑定到tableData
-    getNodeLists() {
+    async getNodeLists(isSearchServer = "noSearch") {
       let resdata = {
         server: this.server || "",
         state: this.selectStatus || "",
         page: this.page || 1
       };
-      getNodeList(resdata).then(res => {
+      let res = await getNodeList(resdata);
+      if (isSearchServer === "noSearch") {
         this.tableData = this.formatData(res.data);
-      });
+      } else if (isSearchServer === "search") {
+        return this.formatData(res.data);
+      }
     },
     // 对从接口中获取的数据处理格式
     formatData(data) {
