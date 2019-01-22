@@ -64,7 +64,7 @@
       <ul class="pagination">
         <li><el-pagination background layout="prev, pager, next" :total="total" :page-size="10" @current-change="handleCurrentChange" :current-page="parseInt(currentPage)"></el-pagination></li>
         <li class="allPage"><span>{{allpage}}</span>页</li>
-        <li>跳至<div class="input"><input type="text" v-model="page"></div>页</li>
+        <li>跳至<div class="input"><input type="text" v-model="page" @focus="page=''"></div>页</li>
         <li><div class="sortButton" @click="jumpSizeChange">确认</div></li>
       </ul>
     </div>
@@ -87,10 +87,9 @@ export default {
   },
   data() {
     return {
-      page: "1",
+      page: 1,
       total: 0,
-      allpage: "",
-      gopage: "1",
+      allpage: 0,
       currentPage: 1,
       refreshTime: 10000,
       selectStatus: "",
@@ -125,10 +124,11 @@ export default {
   methods: {
     // 确认按钮
     jumpSizeChange() {
+      // this.page = this.page > ?
       let datas = {
         server: this.server,
         start: this.selectStatus,
-        page: this.page || this.total
+        page: this.page
       };
       this.currentPage = this.page;
       this.getNodeLists();
@@ -222,7 +222,7 @@ export default {
       return changeData[1];
     },
     // 节点服务状态选择
-    findForState(state) {
+    async findForState(state) {
       this.server = "";
       let referdata = "";
       this.page = "1";
@@ -241,14 +241,8 @@ export default {
         };
         this.selectStatus = state;
       }
-      getNodeList(referdata).then(res => {
-        if (res.data.length !== 0) {
-          this.tableData = this.formatData(res.data);
-        } else {
-          this.tableData = [];
-        }
-      });
-      return state;
+      let res = await getNodeList(referdata);
+      this.tableData = this.formatData(res.data);
     },
     // 页面跳转到历史节点页面
     toHistory(server) {
@@ -311,9 +305,12 @@ export default {
         }
         this.total = list[0].all_results;
         this.allpage = Math.ceil(this.total / 10);
+        this.page = this.allpage;
       } else {
-        this.total = 1;
-        this.allpage = Math.ceil(this.total / 10);
+        console.log("没数据");
+        this.total = 0;
+        this.allpage = 0;
+        this.page = 0;
       }
       return list;
     }

@@ -121,9 +121,9 @@ export default {
       end: "",
       timer: "",
       total: 0,
-      allpage: 100,
+      allpage: 1,
       startup_time: {},
-      gopage: "100",
+      gopage: 100,
       currentPage: 1
     };
   },
@@ -133,9 +133,7 @@ export default {
     }
   },
   created() {
-    setTimeout(() => {
-      this.getData();
-    }, 280);
+    this.getData();
     this.changefreshTime();
   },
   methods: {
@@ -200,6 +198,8 @@ export default {
       this.getData(datas);
     },
     selectState() {
+      this.currentPage = 1;
+      this.total = 0;
       let datas = {
         server: this.server,
         start: this.start,
@@ -246,10 +246,13 @@ export default {
       }
       if (list.length === 0) {
         this.total = 0;
+        this.allpage = 0;
+        this.gopage = 0;
         return list;
       } else {
         this.total = list[0].all_results;
         this.allpage = Math.ceil(this.total / 10);
+        this.gopage = this.allpage;
       }
       return list;
     },
