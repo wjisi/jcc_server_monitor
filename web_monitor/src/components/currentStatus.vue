@@ -62,7 +62,7 @@
           </el-table-column>
       </el-table>
       <ul class="pagination">
-        <li><el-pagination background layout="prev, pager, next" :total="total" :page-size="10" @current-change="handleCurrentChange" :current-page="parseInt(currentPage)"></el-pagination></li>
+        <li><el-pagination background layout="prev, pager, next" :total="total" :page-size="10" @current-change="handleCurrentChange" :current-page="parseInt(page)"></el-pagination></li>
         <li class="allPage"><span>{{allpage}}</span>页</li>
         <li>跳至<div class="input"><input type="text" v-model="page" @focus="page=''"></div>页</li>
         <li><div class="sortButton" @click="jumpSizeChange">确认</div></li>
@@ -90,7 +90,7 @@ export default {
       page: 1,
       total: 0,
       allpage: 0,
-      currentPage: 1,
+      // currentPage: 1,
       refreshTime: 10000,
       selectStatus: "",
       tableData: [],
@@ -130,19 +130,14 @@ export default {
         start: this.selectStatus,
         page: this.page
       };
-      this.currentPage = this.page;
       this.getNodeLists();
       console.log(datas);
       console.log(this.tableData);
     },
     // 分页
     handleCurrentChange(page) {
-      let datas = {
-        server: this.server,
-        start: this.selectStatus,
-        page: page
-      };
-      this.getNodeLists(datas);
+      this.page = page;
+      this.getNodeLists();
     },
     // 查询
     async toSearch(id) {
@@ -260,6 +255,7 @@ export default {
       if (this.refreshTime > 0) {
         this.myInter = setInterval(() => {
           console.log("当前刷新" + this.refreshTime);
+          console.log(this.page);
           this.getNodeLists();
         }, this.refreshTime);
       }
@@ -305,7 +301,7 @@ export default {
         }
         this.total = list[0].all_results;
         this.allpage = Math.ceil(this.total / 10);
-        this.page = this.allpage;
+        // this.page = this.allpage;
       } else {
         console.log("没数据");
         this.total = 0;
