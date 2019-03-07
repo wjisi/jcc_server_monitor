@@ -64,7 +64,7 @@
       <ul class="pagination">
         <li><el-pagination background layout="prev, pager, next" :total="total" :page-size="10" @current-change="handleCurrentChange" :current-page="parseInt(page)"></el-pagination></li>
         <li class="allPage"><span>{{allpage}}</span>页</li>
-        <li>跳至<div class="input"><input type="text" v-model="page" @focus="page=''"></div>页</li>
+        <li>跳至<div class="input"><input type="text" v-model="gopage" @focus="gopage=''"></div>页</li>
         <li><div class="sortButton" @click="jumpSizeChange">确认</div></li>
       </ul>
     </div>
@@ -90,6 +90,7 @@ export default {
       page: 1,
       total: 0,
       allpage: 0,
+      gopage: 1,
       // currentPage: 1,
       refreshTime: 10000,
       selectStatus: "",
@@ -124,15 +125,9 @@ export default {
   methods: {
     // 确认按钮
     jumpSizeChange() {
-      // this.page = this.page > ?
-      let datas = {
-        server: this.server,
-        start: this.selectStatus,
-        page: this.page
-      };
+      this.page = this.gopage;
+      console.log(this.page);
       this.getNodeLists();
-      console.log(datas);
-      console.log(this.tableData);
     },
     // 分页
     handleCurrentChange(page) {
@@ -141,7 +136,6 @@ export default {
     },
     // 查询
     async toSearch(id) {
-      console.log("search target server");
       if (id !== "") {
         this.selectStatus = null;
         this.server = null;
@@ -163,7 +157,6 @@ export default {
           this.server = id;
         }
       } else {
-        console.log("serach all");
         this.server = "";
         this.getNodeLists();
       }
@@ -303,7 +296,7 @@ export default {
         this.allpage = Math.ceil(this.total / 10);
         // this.page = this.allpage;
       } else {
-        console.log("没数据");
+        // console.log("没数据");
         this.total = 0;
         this.allpage = 0;
         this.page = 0;
