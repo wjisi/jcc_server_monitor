@@ -12,6 +12,10 @@
     </div>
     <div>
        <el-table :data="tableData" border style="width: 100%;" :header-row-style="headerRowStyle" :cell-style="ServerStateCellStyle">
+          <div slot="empty" style="font-size:18px;">
+            <div v-if="loading" v-loading="true" element-loading-spinner="el-icon-loading" element-loading-text="拼命加载中"></div>
+            <div v-else >暂无数据</div>
+          </div>
           <el-table-column label="节点服务器名称/ID" min-width="13px" align="center" header-align="center">
            <template slot-scope="scope">
               <el-popover placement="top-start" width="150" trigger="hover">
@@ -91,7 +95,7 @@ export default {
       total: 0,
       allpage: 0,
       gopage: 1,
-      // currentPage: 1,
+      loading: false,
       refreshTime: 10000,
       selectStatus: "",
       tableData: [],
@@ -259,25 +263,29 @@ export default {
     },
     // 将处理过的数据绑定到tableData
     async getNodeLists(isSearchServer = "noSearch") {
+      if (this.loading) {
+        return;
+      }
       let resdata = {
         server: this.server || "",
         state: this.selectStatus || "",
         page: this.page || 1
       };
+      this.loading = true;
       let res = await getNodeList(resdata);
       if (isSearchServer === "noSearch") {
-        this.tableData = this.formatData(res.data);
+        this.tableData = this.formatData(res);
       } else if (isSearchServer === "search") {
-        return this.formatData(res.data);
+        return this.formatData(res);
       }
     },
     // 对从接口中获取的数据处理格式
-    formatData(data) {
+    formatData(result) {
       let list = [];
-      if (data.length > 0) {
+      if (result && result.data && result.data.length > 0) {
         let i = 0;
-        for (; i < data.length; i++) {
-          let item = JSON.parse(data[i]);
+        for (; i < result.data.length; i++) {
+          let item = JSON.parse(result.data[i]);
           list.push({
             index: i + 1,
             server: item.server,
@@ -301,6 +309,7 @@ export default {
         this.allpage = 0;
         this.page = 0;
       }
+      this.loading = false;
       return list;
     }
   }

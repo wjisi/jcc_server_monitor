@@ -29,11 +29,14 @@ export const getNodeList = async (data) => {
     server: data.server || '',
     server_ID: data.server_ID || ''
   }
-  let res = await fetch({
-    url: getInfoHost() + `/homepage`,
-    method: "post",
-    data: datas
-  })
+  let res = [];
+  try {
+    res = await fetch({
+      url: getInfoHost() + `/homepage`,
+      method: "post",
+      data: datas
+    })
+  } catch (err) { console.log(err) }
   return res;
 }
 
@@ -52,10 +55,13 @@ export const getNodeHistoryList = async (data) => {
     end: data.end || '',
     page: data.page || 1
   }
-  let res = await fetch({
-    url: getInfoHost() + `/history`,
-    method: "post",
-    data: datas
-  })
+  let res = [];
+  try {
+    res = await fetch({
+      url: getInfoHost() + `/history`,
+      method: "post",
+      data: datas
+    })
+  } catch (err) { console.log(err) }
   return res;
 }

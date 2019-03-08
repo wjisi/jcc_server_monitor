@@ -22,6 +22,10 @@
     <div class="bockList">
       <div class="blockList">
         <el-table :data="blockList" style="width:100%" row-class-name="historystatusrowClass" header-row-class-name="historystatusHeaderRowclass" :cell-style="cellStyle">
+          <div slot="empty" style="font-size:18px;">
+            <div v-if="loading" v-loading="true" element-loading-spinner="el-icon-loading" element-loading-text="拼命加载中"></div>
+            <div v-else >暂无数据</div>
+          </div>
           <el-table-column prop="server_state" label="节点服务器状态" id="ellipsis" min-width="10%" align="center" header-align="center">
             <template slot-scope="scope"> <div>{{scope.row.server_state}}</div></template>
           </el-table-column>
@@ -84,10 +88,13 @@ export default {
     next(vm => {
       vm.$store.dispatch("updateCurrentPage", "historyStatus");
       vm.$store.dispatch("updateCurrentNode", vm.$route.params.server);
+      vm.getData();
+      vm.changefreshTime();
     });
   },
-  beforeRouteLeaver() {
+  beforeRouteLeave(to, from, next) {
     clearInterval(this.timer);
+    next();
   },
   data() {
     return {
@@ -124,17 +131,15 @@ export default {
       allpage: 1,
       startup_time: {},
       gopage: 100,
-      currentPage: 1
+      currentPage: 1,
+      clearTitle: "清除定时器",
+      loading: false
     };
   },
   computed: {
     server() {
       return this.$store.getters.currentNode;
     }
-  },
-  created() {
-    this.getData();
-    this.changefreshTime();
   },
   methods: {
     clearGopage() {
@@ -211,6 +216,9 @@ export default {
       this.getData(datas);
     },
     async getData(datas = {}) {
+      if (this.loading) {
+        return;
+      }
       if (datas.state === "所有状态") {
         datas.state = "";
       }
@@ -219,40 +227,40 @@ export default {
         start: datas.start || "",
         end: datas.end || "",
         state: datas.state || "",
-        page: datas.page || ""
+        page: datas.page || 1
       };
+      this.loading = true;
       let res = await getNodeHistoryList(data);
-      this.blockList = this.handleGetData(res.data);
+      this.blockList = this.handleGetData(res);
     },
     handleGetData(res) {
       let i = 0;
       let list = [];
-      for (; i < res.length; i++) {
-        let resData = JSON.parse(res[i]);
-        list.push({
-          server_state: resData.server_state || "null",
-          infosGetTime: this.intervalTime(resData.infosGetTime),
-          complete_ledgers: this.intervalString(resData.complete_ledgers),
-          peers: resData.peers || "null",
-          io_latency_ms: resData.io_latency_ms || "null",
-          startup_time: this.intervalTime(resData.startup_time) || "null",
-          build_version: resData.build_version || "null",
-          nodePublic: resData.public || "null",
-          last_ledger_heigth: resData.last_ledger_heigth || "null",
-          hash: resData.hash || "null",
-          last_ledger_time: resData.last_ledger_time || "null",
-          all_results: resData.all_results || "null"
-        });
-      }
-      if (list.length === 0) {
-        this.total = 0;
-        this.allpage = 0;
-        this.gopage = 0;
-        return list;
-      } else {
+      if (res && res.data && res.data.length > 0) {
+        for (; i < res.data.length; i++) {
+          let resData = JSON.parse(res.data[i]);
+          list.push({
+            server_state: resData.server_state || "null",
+            infosGetTime: this.intervalTime(resData.infosGetTime),
+            complete_ledgers: this.intervalString(resData.complete_ledgers),
+            peers: resData.peers || "null",
+            io_latency_ms: resData.io_latency_ms || "null",
+            startup_time: this.intervalTime(resData.startup_time) || "null",
+            build_version: resData.build_version || "null",
+            nodePublic: resData.public || "null",
+            last_ledger_heigth: resData.last_ledger_heigth || "null",
+            hash: resData.hash || "null",
+            last_ledger_time: resData.last_ledger_time || "null",
+            all_results: resData.all_results || "null"
+          });
+        }
         this.total = list[0].all_results;
         this.allpage = Math.ceil(this.total / 10);
         this.gopage = this.allpage;
+      } else {
+        this.total = 0;
+        this.allpage = 0;
+        this.gopage = 0;
       }
       return list;
     },
