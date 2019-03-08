@@ -30,7 +30,7 @@ export const getNodeList = async (data) => {
     server_ID: data.server_ID || ''
   }
   let res = await fetch({
-    url: getInfoHost() + `/index`,
+    url: getInfoHost() + `/homepage`,
     method: "post",
     data: datas
   })
