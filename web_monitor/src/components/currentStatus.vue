@@ -141,9 +141,9 @@ export default {
         this.server = null;
         this.page = "";
         let serverList = await this.getNodeLists("search");
-        let serverHead = id.length > 6 ? id.substr(0, 6) : id;
+        let serverHead = id.length > 6 ? id.substr(0, 5) : id;
         let targetServer = serverList.find(item => {
-          if (serverHead === "wss://") {
+          if (serverHead === "ws://") {
             return item.server === id;
           } else {
             return item.server_ID === id;
