@@ -154,6 +154,7 @@ export default {
         state: this.selectStatusvalues,
         page: this.gopage || 100
       };
+      this.loading = false;
       this.getData(datas);
     },
     handleCurrentChange(val) {
@@ -165,6 +166,7 @@ export default {
         state: this.selectStatusvalues,
         page: val
       };
+      this.loading = false;
       this.getData(datas);
     },
     goback() {
@@ -187,6 +189,7 @@ export default {
             state: this.selectStatusvalues,
             page: this.currentPage
           };
+          this.loading = false;
           this.getData(datas);
         }, this.selectRefreshvalue);
       }
