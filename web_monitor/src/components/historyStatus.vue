@@ -55,7 +55,7 @@
           <el-table-column prop="build_version" label="节点版本" align="center" min-width="9%"></el-table-column>
           <el-table-column prop="hash" label="公钥" align="center" min-width="16%">
             <template slot-scope="scope">
-              <div>{{scope.row.nodePublic}}</div>
+              <div>{{handlePubkey(scope.row.nodePublic)}}</div>
             </template>
           </el-table-column>
           <el-table-column type="expand" width="35" align="left">
@@ -237,10 +237,12 @@ export default {
       this.blockList = this.handleGetData(res);
     },
     handleGetData(res) {
-      let i = 0;
+      console.log(res);
       let list = [];
       if (res && res.data && res.data.length > 0) {
-        for (; i < res.data.length; i++) {
+        let i = 0;
+        let length = res.data.length;
+        for (; i < length; i++) {
           let resData = JSON.parse(res.data[i]);
           list.push({
             server_state: resData.server_state || "null",
@@ -250,7 +252,7 @@ export default {
             io_latency_ms: resData.io_latency_ms || "null",
             startup_time: this.intervalTime(resData.startup_time) || "null",
             build_version: resData.build_version || "null",
-            nodePublic: resData.public || "null",
+            nodePublic: resData.pubkey_node || "null",
             last_ledger_heigth: resData.last_ledger_heigth || "null",
             hash: resData.hash || "null",
             last_ledger_time: resData.last_ledger_time || "null",
@@ -266,6 +268,13 @@ export default {
         this.gopage = 0;
       }
       return list;
+    },
+    handlePubkey(pubkey) {
+      if (!pubkey || pubkey === "" || pubkey === "null") {
+        return "null";
+      }
+      let length = pubkey.length - 5;
+      return pubkey.replace(pubkey.substring(5, length), " ******** ");
     },
     intervalTime(value) {
       let dateTime = {};
