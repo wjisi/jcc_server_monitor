@@ -1,7 +1,7 @@
 <template>
   <div id="historystatus" class="blo">
     <div class="previous">
-      <i class="iconfont icon-fanhuishangyiyeicon"></i>
+      <i class="iconfont icon-fanhuishangyiyeicon" style="font-size:10px;"></i>
       <span @click="goback">返回上一页</span>
     </div>
     <div class="title">
@@ -81,7 +81,7 @@
 </template>
 <script>
 import { getNodeHistoryList } from "@/js/fetch";
-import { getStyle } from "@/js/utils";
+import { getStyle, getMonth } from "@/js/utils";
 export default {
   name: "historyStatus",
   beforeRouteEnter(to, from, next) {
@@ -202,7 +202,7 @@ export default {
         state: this.selectStatusvalues,
         page: this.currentPage
       };
-      this.changefreshTime();
+      this.loading = false;
       this.getData(datas);
     },
     selectState() {
@@ -215,7 +215,6 @@ export default {
         state: this.selectStatusvalues,
         page: this.currentPage
       };
-      this.changefreshTime();
       this.getData(datas);
     },
     async getData(datas = {}) {
@@ -233,11 +232,20 @@ export default {
         page: datas.page || 1
       };
       this.loading = true;
+      console.log(data, "456");
       let res = await getNodeHistoryList(data);
-      this.blockList = this.handleGetData(res);
+      if (res && res.data && res.data.length > 0) {
+        this.blockList = this.handleGetData(res);
+      } else {
+        this.total = 0;
+        this.allpage = 0;
+        this.gopage = 0;
+        this.blockList = [];
+      }
+      this.loading = false;
     },
     handleGetData(res) {
-      console.log(res);
+      console.log(res, "1234");
       let list = [];
       if (res && res.data && res.data.length > 0) {
         let i = 0;
@@ -250,23 +258,26 @@ export default {
             complete_ledgers: this.intervalString(resData.complete_ledgers),
             peers: resData.peers || "null",
             io_latency_ms: resData.io_latency_ms || "null",
-            startup_time: this.intervalTime(resData.startup_time) || "null",
+            startup_time: this.intervalTime(resData.startup_time, 2) || "null",
             build_version: resData.build_version || "null",
             nodePublic: resData.pubkey_node || "null",
             last_ledger_heigth: resData.last_ledger_heigth || "null",
             hash: resData.hash || "null",
-            last_ledger_time: resData.last_ledger_time || "null",
+            last_ledger_time:
+              this.intervalTime(resData.last_ledger_time, 3) || "null",
             all_results: resData.all_results || "null"
           });
         }
         this.total = list[0].all_results;
         this.allpage = Math.ceil(this.total / 10);
         this.gopage = this.allpage;
-      } else {
-        this.total = 0;
-        this.allpage = 0;
-        this.gopage = 0;
       }
+      // else {
+      //   this.total = 0;
+      //   this.allpage = 0;
+      //   this.gopage = 0;
+      // }
+      // this.loading = false;
       return list;
     },
     handlePubkey(pubkey) {
@@ -276,10 +287,22 @@ export default {
       let length = pubkey.length - 5;
       return pubkey.replace(pubkey.substring(5, length), " ******** ");
     },
-    intervalTime(value) {
+    intervalTime(value, index = 1) {
       let dateTime = {};
       if (value) {
+        if (index === 3) {
+          return (value = value.replace(
+            value.substring(5, 8),
+            getMonth(value.substring(5, 8))
+          ));
+        }
         dateTime.date = value.split(" ")[0];
+        if (index === 2) {
+          dateTime.date = dateTime.date.replace(
+            dateTime.date.substring(5, 8),
+            getMonth(dateTime.date.substring(5, 8))
+          );
+        }
         dateTime.time = value.split(" ")[1];
       } else {
         dateTime.date = "null";
@@ -377,7 +400,7 @@ export default {
     border-radius: 6px;
     height: 36px;
     line-height: 36px;
-    width: 58px;
+    min-width: 58px;
     color: #959595;
     margin-left: 20px;
   }
@@ -412,6 +435,9 @@ export default {
 </style>
 
 <style  lang="scss" >
+.el-scrollbar__view li {
+  margin-top: 0;
+}
 .el-icon-arrow-right {
   font-size: 16px;
 }
@@ -461,7 +487,6 @@ export default {
   right: 0;
   color: #383a4b;
   font-size: 16px;
-  display: inline-block;
   float: right;
   overflow: hidden;
   .sure {
@@ -518,7 +543,7 @@ export default {
   }
   .el-pager li {
     background: #ffffff;
-    width: 40px;
+    min-width: 40px;
     height: 40px;
     line-height: 40px;
     margin-right: 10px;

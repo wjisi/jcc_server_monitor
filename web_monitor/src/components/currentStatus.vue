@@ -27,8 +27,8 @@
           <el-table-column prop="server_state" label="节点服务状态" min-width="13px" align="center"  header-align="center"></el-table-column>
           <el-table-column label="节点状态/获取时间" min-width="12%" align="center" header-align="center">
             <template slot-scope="scope">
-              <div>{{changeStateDate(scope.row.infosGetTime)}}</div>
-              <div>{{changeStateTime(scope.row.infosGetTime)}}</div>
+              <div>{{scope.row.infosGetTime.date}}</div>
+              <div>{{scope.row.infosGetTime.time}}</div>
             </template>
           </el-table-column>
           <el-table-column prop="complete_ledgers" label="节点本地账本区间" min-width="15%" align="center" header-align="center">
@@ -54,8 +54,8 @@
           </el-table-column>
           <el-table-column label="节点启动时间" min-width="12%" align="center" header-align="center">
             <template slot-scope="scope">
-              <div>{{changeStateDate(scope.row.startup_time)}}</div>
-              <div>{{changeStateTime(scope.row.startup_time)}}</div>
+             <div>{{scope.row.startup_time.date}}</div>
+              <div>{{scope.row.startup_time.time}}</div>
             </template>
           </el-table-column>
           <el-table-column prop="build_version" label="节点版本" min-width="9%" align="center" header-align="center"></el-table-column>
@@ -77,17 +77,39 @@
 
 <script>
 import { getNodeList } from "@/js/fetch";
-import { getStyle } from "@/js/utils";
+import { getStyle, getMonth } from "@/js/utils";
 import bus from "@/js/bus";
 export default {
   beforeRouteEnter(to, from, next) {
     next(vm => {
       vm.$store.dispatch("updateCurrentPage", "currentStatus");
+      console.log(
+        vm.$store.getters.refreshTime,
+        vm.$store.getters.selectStatus,
+        vm.$store.getters.currentPage
+      );
+      // console.log(
+      //   vm.$store.getters.refreshTime,
+      //   vm.$store.getters.selectStatus,
+      //   vm.$store.getters.currentPage
+      // );
     });
+  },
+  beforeRouteLeave(to, from, next) {
+    this.$store.dispatch("updateCurrentRefreshTime", this.refreshTime);
+    this.$store.dispatch("updateCurrentSelectStatus", this.selectStatus);
+    next();
   },
   beforeDestory() {
     clearInterval(this.myInter);
     bus.$off("search");
+  },
+  mounted() {
+    this.getNodeLists();
+    this.refreshRrequency();
+    bus.$on("search", this.toSearch);
+    this.refreshTime = this.$store.getters.refreshTime || 10000;
+    this.selectStatus = this.$store.getters.selectStatus || "";
   },
   data() {
     return {
@@ -121,11 +143,11 @@ export default {
       ]
     };
   },
-  created() {
-    this.getNodeLists();
-    this.refreshRrequency();
-    bus.$on("search", this.toSearch);
-  },
+  // created() {
+  //   this.getNodeLists();
+  //   this.refreshRrequency();
+  //   bus.$on("search", this.toSearch);
+  // },
   methods: {
     // 确认按钮
     jumpSizeChange() {
@@ -173,23 +195,22 @@ export default {
       return "";
     },
     // 将数据拆换成两行显示
-    changeStateDate(startupTime) {
-      let changeData = {};
-      if (startupTime !== "null") {
-        changeData = startupTime.split(/\s/g);
+    intervalTime(value, index = 1) {
+      let dateTime = {};
+      if (value) {
+        dateTime.date = value.split(" ")[0];
+        if (index === 2) {
+          dateTime.date = dateTime.date.replace(
+            dateTime.date.substring(5, 8),
+            getMonth(dateTime.date.substring(5, 8))
+          );
+        }
+        dateTime.time = value.split(" ")[1];
       } else {
-        changeData[0] = "null";
+        dateTime.date = "null";
+        dateTime.time = "";
       }
-      return changeData[0];
-    },
-    changeStateTime(startupTime) {
-      let changeData = {};
-      if (startupTime !== "null") {
-        changeData = startupTime.split(/\s/g);
-      } else {
-        changeData[1] = null;
-      }
-      return changeData[1];
+      return dateTime;
     },
     changeCompleteLedgersData1(completeLedger) {
       let changeData = {};
@@ -215,26 +236,8 @@ export default {
     },
     // 节点服务状态选择
     async findForState(state) {
-      this.server = "";
-      let referdata = "";
-      this.page = "1";
-      if (state === "") {
-        referdata = {
-          state: state,
-          server: this.server || "",
-          page: this.page || 1
-        };
-        this.selectStatus = state;
-      } else {
-        referdata = {
-          state: state,
-          server: this.server || "",
-          page: this.page || 1
-        };
-        this.selectStatus = state;
-      }
-      let res = await getNodeList(referdata);
-      this.tableData = this.formatData(res.data);
+      this.refreshRrequency();
+      this.getNodeLists();
     },
     // 页面跳转到历史节点页面
     toHistory(server) {
@@ -272,12 +275,22 @@ export default {
         page: this.page || 1
       };
       this.loading = true;
+      console.log(resdata);
       let res = await getNodeList(resdata);
-      if (isSearchServer === "noSearch") {
-        this.tableData = this.formatData(res);
-      } else if (isSearchServer === "search") {
-        return this.formatData(res);
+      console.log(res);
+      if (res && res.data && res.data.length > 0) {
+        if (isSearchServer === "noSearch") {
+          this.tableData = this.formatData(res);
+        } else if (isSearchServer === "search") {
+          return this.formatData(res);
+        }
+      } else {
+        this.total = 0;
+        this.allpage = 0;
+        this.page = 0;
+        this.tableData = [];
       }
+      this.loading = false;
     },
     // 对从接口中获取的数据处理格式
     formatData(result) {
@@ -291,25 +304,26 @@ export default {
             server: item.server,
             server_ID: item.server_ID || "null",
             server_state: item.server_state,
-            infosGetTime: item.infosGetTime,
+            infosGetTime: this.intervalTime(item.infosGetTime),
             complete_ledgers: item.complete_ledgers || "null",
             build_version: item.build_version || "null",
             io_latency_ms: item.io_latency_ms || "null",
             peers: item.peers || "null",
-            startup_time: item.startup_time || "null",
+            startup_time: this.intervalTime(item.startup_time, 2) || "null",
             all_results: item.all_results || "null"
           });
         }
         this.total = list[0].all_results;
         this.allpage = Math.ceil(this.total / 10);
         // this.page = this.allpage;
-      } else {
-        // console.log("没数据");
-        this.total = 0;
-        this.allpage = 0;
-        this.page = 0;
       }
-      this.loading = false;
+      //  else {
+      //   // console.log("没数据");
+      //   this.total = 0;
+      //   this.allpage = 0;
+      //   this.page = 0;
+      // }
+      // this.loading = false;
       return list;
     }
   }
@@ -439,6 +453,9 @@ li {
 }
 </style>
 <style  lang="scss"  >
+.el-scrollbar__view li {
+  margin-top: 0;
+}
 #currentStatus .pagination .is-background {
   .el-pager li:not(.disabled).active {
     background: #5769fa;
