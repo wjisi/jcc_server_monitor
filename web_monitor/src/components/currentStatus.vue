@@ -87,6 +87,7 @@ export default {
   },
   beforeRouteLeave(to, from, next) {
     clearInterval(this.myInter);
+    this.server = "";
     this.$store.dispatch("updateCurrentRefreshTime", this.refreshTime);
     this.$store.dispatch("updateCurrentSelectStatus", this.selectStatus);
     next();
@@ -277,6 +278,7 @@ export default {
         //   return this.formatData(res);
         // }
       } else {
+        this.server = "";
         this.total = 0;
         this.allpage = 0;
         this.page = 0;
