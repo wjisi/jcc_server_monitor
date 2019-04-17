@@ -151,9 +151,9 @@ export default {
     // 查询
     async toSearch(id) {
       if (id !== "") {
-        this.selectStatus = -1;
+        // this.selectStatus = -1;
         this.server = id;
-        this.page = 1;
+        // this.page = 1;
         this.getNodeLists();
         // let serverList = await this.getNodeLists("search");
         // console.log(serverList);
@@ -256,7 +256,8 @@ export default {
       return "font-size:14px;color:#383a4b;height:40px;";
     },
     // 将处理过的数据绑定到tableData
-    async getNodeLists(isSearchServer = "noSearch") {
+    // isSearchServer = "noSearch"
+    async getNodeLists() {
       if (this.loading) {
         return;
       }
@@ -270,11 +271,11 @@ export default {
       let res = await getNodeList(resdata);
       console.log(res);
       if (res && res.data && res.data.length > 0) {
-        if (isSearchServer === "noSearch") {
-          this.tableData = this.formatData(res);
-        } else if (isSearchServer === "search") {
-          return this.formatData(res);
-        }
+        this.tableData = this.formatData(res);
+        // if (isSearchServer === "noSearch") {
+        // } else if (isSearchServer === "search") {
+        //   return this.formatData(res);
+        // }
       } else {
         this.total = 0;
         this.allpage = 0;
