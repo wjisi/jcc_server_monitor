@@ -29,7 +29,15 @@ export default {
   methods: {
     search() {
       bus.$emit("search", this.searchContent);
+    },
+    clearInput() {
+      if (this.searchContent !== "") {
+        this.searchContent = "";
+      }
     }
+  },
+  mounted() {
+    bus.$on("clearInput", this.clearInput);
   },
   computed: {
     height() {

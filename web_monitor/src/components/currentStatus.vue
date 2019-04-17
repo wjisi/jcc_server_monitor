@@ -87,7 +87,10 @@ export default {
   },
   beforeRouteLeave(to, from, next) {
     clearInterval(this.myInter);
-    this.server = "";
+    if (this.server !== "") {
+      bus.$emit("clearInput");
+      this.server = "";
+    }
     this.$store.dispatch("updateCurrentRefreshTime", this.refreshTime);
     this.$store.dispatch("updateCurrentSelectStatus", this.selectStatus);
     next();
@@ -139,7 +142,6 @@ export default {
     // 确认按钮
     jumpSizeChange() {
       this.page = this.gopage;
-      console.log(this.page);
       this.refreshRrequency();
       this.getNodeLists();
     },
@@ -152,9 +154,11 @@ export default {
     // 查询
     async toSearch(id) {
       if (id !== "") {
+        clearInterval(this.myInter);
         // this.selectStatus = -1;
         this.server = id;
         // this.page = 1;
+        this.refreshRrequency();
         this.getNodeLists();
         // let serverList = await this.getNodeLists("search");
         // console.log(serverList);
@@ -245,7 +249,6 @@ export default {
     refreshRrequency() {
       clearInterval(this.myInter);
       console.log("当前刷新" + this.refreshTime);
-      console.log(this.refreshTime > 0, this.refreshTime !== -1);
       if (this.refreshTime > 0 && this.refreshTime !== -1) {
         this.myInter = setInterval(() => {
           this.getNodeLists();
@@ -268,11 +271,10 @@ export default {
         page: this.page || 1
       };
       this.loading = true;
-      console.log(resdata);
       let res = await getNodeList(resdata);
-      console.log(res);
       if (res && res.data && res.data.length > 0) {
         this.tableData = this.formatData(res);
+        console.log(this.tableData);
         // if (isSearchServer === "noSearch") {
         // } else if (isSearchServer === "search") {
         //   return this.formatData(res);
