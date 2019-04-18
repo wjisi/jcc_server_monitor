@@ -27,8 +27,8 @@
           <el-table-column prop="server_state" label="节点服务状态" min-width="13px" align="center"  header-align="center"></el-table-column>
           <el-table-column label="节点状态/获取时间" min-width="12%" align="center" header-align="center">
             <template slot-scope="scope">
-              <div>{{changeStateDate(scope.row.infosGetTime)}}</div>
-              <div>{{changeStateTime(scope.row.infosGetTime)}}</div>
+              <div>{{scope.row.infosGetTime.date}}</div>
+              <div>{{scope.row.infosGetTime.time}}</div>
             </template>
           </el-table-column>
           <el-table-column prop="complete_ledgers" label="节点本地账本区间" min-width="15%" align="center" header-align="center">
@@ -54,8 +54,8 @@
           </el-table-column>
           <el-table-column label="节点启动时间" min-width="12%" align="center" header-align="center">
             <template slot-scope="scope">
-              <div>{{changeStateDate(scope.row.startup_time)}}</div>
-              <div>{{changeStateTime(scope.row.startup_time)}}</div>
+             <div>{{scope.row.startup_time.date}}</div>
+              <div>{{scope.row.startup_time.time}}</div>
             </template>
           </el-table-column>
           <el-table-column prop="build_version" label="节点版本" min-width="9%" align="center" header-align="center"></el-table-column>
@@ -77,7 +77,7 @@
 
 <script>
 import { getNodeList } from "@/js/fetch";
-import { getStyle } from "@/js/utils";
+import { getStyle, getMonth } from "@/js/utils";
 import bus from "@/js/bus";
 export default {
   beforeRouteEnter(to, from, next) {
@@ -85,9 +85,26 @@ export default {
       vm.$store.dispatch("updateCurrentPage", "currentStatus");
     });
   },
+  beforeRouteLeave(to, from, next) {
+    clearInterval(this.myInter);
+    if (this.server !== "") {
+      bus.$emit("clearInput");
+      this.server = "";
+    }
+    this.$store.dispatch("updateCurrentRefreshTime", this.refreshTime);
+    this.$store.dispatch("updateCurrentSelectStatus", this.selectStatus);
+    next();
+  },
   beforeDestory() {
     clearInterval(this.myInter);
     bus.$off("search");
+  },
+  mounted() {
+    bus.$on("search", this.toSearch);
+    this.refreshTime = this.$store.getters.refreshTime || 10000;
+    this.selectStatus = this.$store.getters.selectStatus || "";
+    this.refreshRrequency();
+    this.getNodeLists();
   },
   data() {
     return {
@@ -121,49 +138,50 @@ export default {
       ]
     };
   },
-  created() {
-    this.getNodeLists();
-    this.refreshRrequency();
-    bus.$on("search", this.toSearch);
-  },
   methods: {
     // 确认按钮
     jumpSizeChange() {
       this.page = this.gopage;
-      console.log(this.page);
+      this.refreshRrequency();
       this.getNodeLists();
     },
     // 分页
     handleCurrentChange(page) {
       this.page = page;
+      this.refreshRrequency();
       this.getNodeLists();
     },
     // 查询
     async toSearch(id) {
       if (id !== "") {
-        this.selectStatus = null;
-        this.server = null;
-        this.page = "";
-        let serverList = await this.getNodeLists("search");
-        let serverHead = id.length > 6 ? id.substr(0, 5) : id;
-        let targetServer = serverList.find(item => {
-          if (serverHead === "ws://") {
-            return item.server === id;
-          } else {
-            return item.server_ID === id;
-          }
-        });
-        this.tableData = [];
-        if (targetServer) {
-          this.server = targetServer.server;
-          this.tableData.push(targetServer);
-        } else {
-          this.server = id;
-        }
-      } else {
-        this.server = "";
+        clearInterval(this.myInter);
+        // this.selectStatus = -1;
+        this.server = id;
+        // this.page = 1;
+        this.refreshRrequency();
         this.getNodeLists();
+        // let serverList = await this.getNodeLists("search");
+        // console.log(serverList);
+        // let serverHead = id.length > 6 ? id.substr(0, 5) : id;
+        // let targetServer = serverList.find(item => {
+        //   if (serverHead === "ws://") {
+        //     return item.server === id;
+        //   } else {
+        //     return item.server_ID === id;
+        //   }
+        // });
+        // this.tableData = [];
+        // if (targetServer) {
+        //   this.server = targetServer.server;
+        //   this.tableData.push(targetServer);
+        // } else {
+        //   this.server = id;
+        // }
       }
+      // else {
+      //   this.server = "";
+      //   this.getNodeLists();
+      // }
     },
     // 节点状态列单元格背景颜色显示
     ServerStateCellStyle(status) {
@@ -173,23 +191,22 @@ export default {
       return "";
     },
     // 将数据拆换成两行显示
-    changeStateDate(startupTime) {
-      let changeData = {};
-      if (startupTime !== "null") {
-        changeData = startupTime.split(/\s/g);
+    intervalTime(value, index = 1) {
+      let dateTime = {};
+      if (value) {
+        dateTime.date = value.split(" ")[0];
+        if (index === 2) {
+          dateTime.date = dateTime.date.replace(
+            dateTime.date.substring(5, 8),
+            getMonth(dateTime.date.substring(5, 8))
+          );
+        }
+        dateTime.time = value.split(" ")[1];
       } else {
-        changeData[0] = "null";
+        dateTime.date = "null";
+        dateTime.time = "";
       }
-      return changeData[0];
-    },
-    changeStateTime(startupTime) {
-      let changeData = {};
-      if (startupTime !== "null") {
-        changeData = startupTime.split(/\s/g);
-      } else {
-        changeData[1] = null;
-      }
-      return changeData[1];
+      return dateTime;
     },
     changeCompleteLedgersData1(completeLedger) {
       let changeData = {};
@@ -215,26 +232,8 @@ export default {
     },
     // 节点服务状态选择
     async findForState(state) {
-      this.server = "";
-      let referdata = "";
-      this.page = "1";
-      if (state === "") {
-        referdata = {
-          state: state,
-          server: this.server || "",
-          page: this.page || 1
-        };
-        this.selectStatus = state;
-      } else {
-        referdata = {
-          state: state,
-          server: this.server || "",
-          page: this.page || 1
-        };
-        this.selectStatus = state;
-      }
-      let res = await getNodeList(referdata);
-      this.tableData = this.formatData(res.data);
+      this.refreshRrequency();
+      this.getNodeLists();
     },
     // 页面跳转到历史节点页面
     toHistory(server) {
@@ -249,10 +248,9 @@ export default {
     // 定时器:刷新频率
     refreshRrequency() {
       clearInterval(this.myInter);
-      if (this.refreshTime > 0) {
+      console.log("当前刷新" + this.refreshTime);
+      if (this.refreshTime > 0 && this.refreshTime !== -1) {
         this.myInter = setInterval(() => {
-          console.log("当前刷新" + this.refreshTime);
-          console.log(this.page);
           this.getNodeLists();
         }, this.refreshTime);
       }
@@ -262,7 +260,8 @@ export default {
       return "font-size:14px;color:#383a4b;height:40px;";
     },
     // 将处理过的数据绑定到tableData
-    async getNodeLists(isSearchServer = "noSearch") {
+    // isSearchServer = "noSearch"
+    async getNodeLists() {
       if (this.loading) {
         return;
       }
@@ -273,11 +272,21 @@ export default {
       };
       this.loading = true;
       let res = await getNodeList(resdata);
-      if (isSearchServer === "noSearch") {
+      if (res && res.data && res.data.length > 0) {
         this.tableData = this.formatData(res);
-      } else if (isSearchServer === "search") {
-        return this.formatData(res);
+        console.log(this.tableData);
+        // if (isSearchServer === "noSearch") {
+        // } else if (isSearchServer === "search") {
+        //   return this.formatData(res);
+        // }
+      } else {
+        this.server = "";
+        this.total = 0;
+        this.allpage = 0;
+        this.page = 0;
+        this.tableData = [];
       }
+      this.loading = false;
     },
     // 对从接口中获取的数据处理格式
     formatData(result) {
@@ -291,25 +300,26 @@ export default {
             server: item.server,
             server_ID: item.server_ID || "null",
             server_state: item.server_state,
-            infosGetTime: item.infosGetTime,
+            infosGetTime: this.intervalTime(item.infosGetTime),
             complete_ledgers: item.complete_ledgers || "null",
             build_version: item.build_version || "null",
             io_latency_ms: item.io_latency_ms || "null",
             peers: item.peers || "null",
-            startup_time: item.startup_time || "null",
+            startup_time: this.intervalTime(item.startup_time, 2) || "null",
             all_results: item.all_results || "null"
           });
         }
         this.total = list[0].all_results;
         this.allpage = Math.ceil(this.total / 10);
         // this.page = this.allpage;
-      } else {
-        // console.log("没数据");
-        this.total = 0;
-        this.allpage = 0;
-        this.page = 0;
       }
-      this.loading = false;
+      //  else {
+      //   // console.log("没数据");
+      //   this.total = 0;
+      //   this.allpage = 0;
+      //   this.page = 0;
+      // }
+      // this.loading = false;
       return list;
     }
   }
@@ -439,6 +449,9 @@ li {
 }
 </style>
 <style  lang="scss"  >
+.el-scrollbar__view li {
+  margin-top: 0;
+}
 #currentStatus .pagination .is-background {
   .el-pager li:not(.disabled).active {
     background: #5769fa;
