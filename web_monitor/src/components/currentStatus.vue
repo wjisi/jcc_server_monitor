@@ -83,19 +83,10 @@ export default {
   beforeRouteEnter(to, from, next) {
     next(vm => {
       vm.$store.dispatch("updateCurrentPage", "currentStatus");
-      console.log(
-        vm.$store.getters.refreshTime,
-        vm.$store.getters.selectStatus,
-        vm.$store.getters.currentPage
-      );
-      // console.log(
-      //   vm.$store.getters.refreshTime,
-      //   vm.$store.getters.selectStatus,
-      //   vm.$store.getters.currentPage
-      // );
     });
   },
   beforeRouteLeave(to, from, next) {
+    clearInterval(this.myInter);
     this.$store.dispatch("updateCurrentRefreshTime", this.refreshTime);
     this.$store.dispatch("updateCurrentSelectStatus", this.selectStatus);
     next();
@@ -105,11 +96,11 @@ export default {
     bus.$off("search");
   },
   mounted() {
-    this.getNodeLists();
-    this.refreshRrequency();
     bus.$on("search", this.toSearch);
     this.refreshTime = this.$store.getters.refreshTime || 10000;
     this.selectStatus = this.$store.getters.selectStatus || "";
+    this.refreshRrequency();
+    this.getNodeLists();
   },
   data() {
     return {
@@ -143,49 +134,49 @@ export default {
       ]
     };
   },
-  // created() {
-  //   this.getNodeLists();
-  //   this.refreshRrequency();
-  //   bus.$on("search", this.toSearch);
-  // },
   methods: {
     // 确认按钮
     jumpSizeChange() {
       this.page = this.gopage;
       console.log(this.page);
+      this.refreshRrequency();
       this.getNodeLists();
     },
     // 分页
     handleCurrentChange(page) {
       this.page = page;
+      this.refreshRrequency();
       this.getNodeLists();
     },
     // 查询
     async toSearch(id) {
       if (id !== "") {
-        this.selectStatus = null;
-        this.server = null;
-        this.page = "";
-        let serverList = await this.getNodeLists("search");
-        let serverHead = id.length > 6 ? id.substr(0, 5) : id;
-        let targetServer = serverList.find(item => {
-          if (serverHead === "ws://") {
-            return item.server === id;
-          } else {
-            return item.server_ID === id;
-          }
-        });
-        this.tableData = [];
-        if (targetServer) {
-          this.server = targetServer.server;
-          this.tableData.push(targetServer);
-        } else {
-          this.server = id;
-        }
-      } else {
-        this.server = "";
+        this.selectStatus = -1;
+        this.server = id;
+        this.page = 1;
         this.getNodeLists();
+        // let serverList = await this.getNodeLists("search");
+        // console.log(serverList);
+        // let serverHead = id.length > 6 ? id.substr(0, 5) : id;
+        // let targetServer = serverList.find(item => {
+        //   if (serverHead === "ws://") {
+        //     return item.server === id;
+        //   } else {
+        //     return item.server_ID === id;
+        //   }
+        // });
+        // this.tableData = [];
+        // if (targetServer) {
+        //   this.server = targetServer.server;
+        //   this.tableData.push(targetServer);
+        // } else {
+        //   this.server = id;
+        // }
       }
+      // else {
+      //   this.server = "";
+      //   this.getNodeLists();
+      // }
     },
     // 节点状态列单元格背景颜色显示
     ServerStateCellStyle(status) {
@@ -252,10 +243,10 @@ export default {
     // 定时器:刷新频率
     refreshRrequency() {
       clearInterval(this.myInter);
-      if (this.refreshTime > 0) {
+      console.log("当前刷新" + this.refreshTime);
+      console.log(this.refreshTime > 0, this.refreshTime !== -1);
+      if (this.refreshTime > 0 && this.refreshTime !== -1) {
         this.myInter = setInterval(() => {
-          console.log("当前刷新" + this.refreshTime);
-          console.log(this.page);
           this.getNodeLists();
         }, this.refreshTime);
       }

@@ -96,6 +96,9 @@ export default {
     clearInterval(this.timer);
     next();
   },
+  beforeDestory() {
+    clearInterval(this.timer);
+  },
   data() {
     return {
       pickerOptions: {
@@ -155,6 +158,7 @@ export default {
         page: this.gopage || 100
       };
       this.loading = false;
+      this.changefreshTime();
       this.getData(datas);
     },
     handleCurrentChange(val) {
@@ -167,6 +171,7 @@ export default {
         page: val
       };
       this.loading = false;
+      this.changefreshTime();
       this.getData(datas);
     },
     goback() {
@@ -203,6 +208,7 @@ export default {
         page: this.currentPage
       };
       this.loading = false;
+      this.changefreshTime();
       this.getData(datas);
     },
     selectState() {
@@ -215,6 +221,7 @@ export default {
         state: this.selectStatusvalues,
         page: this.currentPage
       };
+      this.changefreshTime();
       this.getData(datas);
     },
     async getData(datas = {}) {
@@ -234,6 +241,7 @@ export default {
       this.loading = true;
       console.log(data, "456");
       let res = await getNodeHistoryList(data);
+
       if (res && res.data && res.data.length > 0) {
         this.blockList = this.handleGetData(res);
       } else {
@@ -408,7 +416,7 @@ export default {
     cursor: pointer;
   }
   li .input {
-    width: 36px;
+    min-width: 40px;
     height: 36px;
     border: 1px solid #959595;
     display: inline-block;
