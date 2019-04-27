@@ -158,8 +158,9 @@ export default {
         page: this.gopage || 100
       };
       this.loading = false;
-      this.changefreshTime();
+      clearInterval(this.timer);
       this.getData(datas);
+      this.changefreshTime();
     },
     handleCurrentChange(val) {
       this.currentPage = val;
@@ -171,8 +172,9 @@ export default {
         page: val
       };
       this.loading = false;
-      this.changefreshTime();
+      clearInterval(this.timer);
       this.getData(datas);
+      this.changefreshTime();
     },
     goback() {
       this.$router.go(-1);
@@ -208,8 +210,9 @@ export default {
         page: this.currentPage
       };
       this.loading = false;
-      this.changefreshTime();
+      clearInterval(this.timer);
       this.getData(datas);
+      this.changefreshTime();
     },
     selectState() {
       this.currentPage = 1;
@@ -221,8 +224,9 @@ export default {
         state: this.selectStatusvalues,
         page: this.currentPage
       };
-      this.changefreshTime();
+      clearInterval(this.timer);
       this.getData(datas);
+      this.changefreshTime();
     },
     async getData(datas = {}) {
       if (this.loading) {
@@ -261,19 +265,19 @@ export default {
         for (; i < length; i++) {
           let resData = JSON.parse(res.data[i]);
           list.push({
-            server_state: resData.server_state || "null",
+            server_state: resData.server_state || "—",
             infosGetTime: this.intervalTime(resData.infosGetTime),
             complete_ledgers: this.intervalString(resData.complete_ledgers),
-            peers: resData.peers || "null",
-            io_latency_ms: resData.io_latency_ms || "null",
-            startup_time: this.intervalTime(resData.startup_time, 2) || "null",
-            build_version: resData.build_version || "null",
-            nodePublic: resData.pubkey_node || "null",
-            last_ledger_heigth: resData.last_ledger_heigth || "null",
-            hash: resData.hash || "null",
+            peers: resData.peers || "—",
+            io_latency_ms: resData.io_latency_ms || "—",
+            startup_time: this.intervalTime(resData.startup_time, 2) || "—",
+            build_version: resData.build_version || "—",
+            nodePublic: resData.pubkey_node || "—",
+            last_ledger_heigth: resData.last_ledger_heigth || "—",
+            hash: resData.hash || "—",
             last_ledger_time:
-              this.intervalTime(resData.last_ledger_time, 3) || "null",
-            all_results: resData.all_results || "null"
+              this.intervalTime(resData.last_ledger_time, 3) || "—",
+            all_results: resData.all_results || "—"
           });
         }
         this.total = list[0].all_results;
@@ -289,8 +293,8 @@ export default {
       return list;
     },
     handlePubkey(pubkey) {
-      if (!pubkey || pubkey === "" || pubkey === "null") {
-        return "null";
+      if (!pubkey || pubkey === "" || pubkey === "—") {
+        return "—";
       }
       let length = pubkey.length - 5;
       return pubkey.replace(pubkey.substring(5, length), " ******** ");
@@ -313,7 +317,7 @@ export default {
         }
         dateTime.time = value.split(" ")[1];
       } else {
-        dateTime.date = "null";
+        dateTime.date = "—";
         dateTime.time = "";
       }
       return dateTime;
@@ -325,7 +329,7 @@ export default {
         ellipsisString.data2 = value.substring(8, 13);
         ellipsisString.all = value;
       } else {
-        ellipsisString.data1 = "null";
+        ellipsisString.data1 = "—";
         ellipsisString.data2 = "";
         ellipsisString.all = "";
       }

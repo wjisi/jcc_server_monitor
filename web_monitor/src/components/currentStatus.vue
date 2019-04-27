@@ -31,15 +31,11 @@
               <div>{{scope.row.infosGetTime.time}}</div>
             </template>
           </el-table-column>
-          <el-table-column prop="complete_ledgers" label="节点本地账本区间" min-width="15%" align="center" header-align="center">
-              <template slot-scope="scope">
-              <el-dropdown>
-                <div class="complete_ledgers" align="center">{{changeCompleteLedgersData1(scope.row.complete_ledgers)}}</div>
-                <div class="complete_ledgers">{{changeCompleteLedgersData2(scope.row.complete_ledgers)}}</div>
-                <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item>{{scope.row.complete_ledgers}}</el-dropdown-item>
-                </el-dropdown-menu>
-              </el-dropdown>
+           <el-table-column prop="complete_ledgers" label="节点本地账本区间" align="center" min-width="15%"  header-align="center">
+            <template slot-scope="scope">
+              <el-popover placement="top-start" width="200" trigger="hover" :content="scope.row.complete_ledgers.all">
+                <el-button slot="reference"> <div>{{scope.row.complete_ledgers.data1}}</div> <div>{{scope.row.complete_ledgers.data2}}</div></el-button>
+              </el-popover>
             </template>
           </el-table-column>
           <el-table-column label="P2P网络连接节点数量" min-width="12%" align="center" header-align="center" >
@@ -93,6 +89,7 @@ export default {
     }
     this.$store.dispatch("updateCurrentRefreshTime", this.refreshTime);
     this.$store.dispatch("updateCurrentSelectStatus", this.selectStatus);
+    clearInterval(this.myInter);
     next();
   },
   beforeDestory() {
@@ -103,8 +100,9 @@ export default {
     bus.$on("search", this.toSearch);
     this.refreshTime = this.$store.getters.refreshTime || 10000;
     this.selectStatus = this.$store.getters.selectStatus || "";
-    this.refreshRrequency();
+    clearInterval(this.myInter);
     this.getNodeLists();
+    this.refreshRrequency();
   },
   data() {
     return {
@@ -142,24 +140,27 @@ export default {
     // 确认按钮
     jumpSizeChange() {
       this.page = this.gopage;
-      this.refreshRrequency();
+      clearInterval(this.myInter);
       this.getNodeLists();
+      this.refreshRrequency();
     },
     // 分页
     handleCurrentChange(page) {
       this.page = page;
-      this.refreshRrequency();
+      clearInterval(this.myInter);
       this.getNodeLists();
+      this.refreshRrequency();
     },
     // 查询
-    async toSearch(id) {
+    toSearch(id) {
+      clearInterval(this.myInter);
       if (id !== "") {
-        clearInterval(this.myInter);
         // this.selectStatus = -1;
         this.server = id;
         // this.page = 1;
-        this.refreshRrequency();
+        clearInterval(this.myInter);
         this.getNodeLists();
+        this.refreshRrequency();
         // let serverList = await this.getNodeLists("search");
         // console.log(serverList);
         // let serverHead = id.length > 6 ? id.substr(0, 5) : id;
@@ -203,37 +204,16 @@ export default {
         }
         dateTime.time = value.split(" ")[1];
       } else {
-        dateTime.date = "null";
+        dateTime.date = "—";
         dateTime.time = "";
       }
       return dateTime;
     },
-    changeCompleteLedgersData1(completeLedger) {
-      let changeData = {};
-      if (completeLedger !== "null" && completeLedger.length > 15) {
-        changeData = completeLedger.split(/,/g);
-      } else if (completeLedger !== "null" && completeLedger.length === 15) {
-        changeData[0] = completeLedger;
-      } else {
-        changeData[0] = "null";
-      }
-      return changeData[0];
-    },
-    changeCompleteLedgersData2(completeLedger) {
-      let changeData = {};
-      if (completeLedger !== "null" && completeLedger.length > 15) {
-        changeData = completeLedger.split(/,/g);
-      } else if (completeLedger !== "null" && completeLedger.length === 15) {
-        changeData[1] = null;
-      } else {
-        changeData[1] = null;
-      }
-      return changeData[1];
-    },
     // 节点服务状态选择
     async findForState(state) {
-      this.refreshRrequency();
+      clearInterval(this.myInter);
       this.getNodeLists();
+      this.refreshRrequency();
     },
     // 页面跳转到历史节点页面
     toHistory(server) {
@@ -271,22 +251,43 @@ export default {
         page: this.page || 1
       };
       this.loading = true;
+      console.log(resdata);
       let res = await getNodeList(resdata);
       if (res && res.data && res.data.length > 0) {
+        console.log(res);
         this.tableData = this.formatData(res);
-        console.log(this.tableData);
         // if (isSearchServer === "noSearch") {
         // } else if (isSearchServer === "search") {
         //   return this.formatData(res);
         // }
       } else {
-        this.server = "";
+        // this.server = "";
         this.total = 0;
         this.allpage = 0;
-        this.page = 0;
+        // this.page = 0;
         this.tableData = [];
       }
       this.loading = false;
+    },
+    intervalString(value) {
+      let ellipsisString = {};
+      if (value) {
+        ellipsisString.data1 = value.substring(0, 8);
+        ellipsisString.data2 = value.substring(8, 13);
+        ellipsisString.all = value;
+      } else {
+        ellipsisString.data1 = "—";
+        ellipsisString.data2 = "";
+        ellipsisString.all = "";
+      }
+      return ellipsisString;
+    },
+    returnZero(value) {
+      if (value) {
+        return value;
+      } else {
+        return "—";
+      }
     },
     // 对从接口中获取的数据处理格式
     formatData(result) {
@@ -298,15 +299,15 @@ export default {
           list.push({
             index: i + 1,
             server: item.server,
-            server_ID: item.server_ID || "null",
+            server_ID: item.server_ID || "—",
             server_state: item.server_state,
             infosGetTime: this.intervalTime(item.infosGetTime),
-            complete_ledgers: item.complete_ledgers || "null",
-            build_version: item.build_version || "null",
-            io_latency_ms: item.io_latency_ms || "null",
-            peers: item.peers || "null",
-            startup_time: this.intervalTime(item.startup_time, 2) || "null",
-            all_results: item.all_results || "null"
+            complete_ledgers: this.intervalString(item.complete_ledgers),
+            build_version: item.build_version || "—",
+            io_latency_ms: item.io_latency_ms || "—",
+            peers: this.returnZero(item.peers),
+            startup_time: this.intervalTime(item.startup_time, 2) || "—",
+            all_results: item.all_results || "—"
           });
         }
         this.total = list[0].all_results;
@@ -493,5 +494,10 @@ li {
   color: #4d4f57;
   font: 14px;
   max-height: 52px;
+}
+.el-button {
+  border: 0;
+  background: none;
+  font-size: 12px;
 }
 </style>
